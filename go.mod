@@ -1,4 +1,4 @@
-module goutils
+module github.com/byt3-m3/goutils
 
 go 1.18
 
