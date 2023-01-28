@@ -37,8 +37,8 @@ func ProvideIMongoClientConfig(mongoUri, dbName, collectionName string) *ClientC
 func ProvideIMongoClientConfigFromEnv(dbName, collectionName string) *ClientConfig {
 	return &ClientConfig{
 		MClientConfig:  &MongoClientConfig{MongoURI: env_utils.GetEnvStrict("MONGO_URI")},
-		CollectionName: dbName,
-		DBName:         collectionName,
+		CollectionName: collectionName,
+		DBName:         dbName,
 	}
 }
 
