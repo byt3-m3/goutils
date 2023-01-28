@@ -20,6 +20,10 @@ type (
 		Cursor MongoCursor
 		Error  error
 	}
+
+	CloseConnectionMockResponse struct {
+		Error error
+	}
 )
 
 type MongoClientMock struct {
@@ -27,6 +31,7 @@ type MongoClientMock struct {
 	CountDocumentsMockResponse  *CountDocumentsMockResponse
 	SaveDocumentMockResponse    *SaveDocumentMockResponse
 	GetDocumentByIdMockResponse *GetDocumentByIdMockResponse
+	CloseConnectionMockResponse *CloseConnectionMockResponse
 }
 
 func (m *MongoClientMock) GetDocumentById(ctx context.Context, recordId primitive.ObjectID) (MongoCursor, error) {
@@ -39,4 +44,7 @@ func (m *MongoClientMock) SaveDocument(ctx context.Context, document interface{}
 
 func (m *MongoClientMock) CountDocuments(ctx context.Context, filter primitive.M) (int64, error) {
 	return m.CountDocumentsMockResponse.Count, m.CountDocumentsMockResponse.Error
+}
+func (m *MongoClientMock) CloseConnection(ctx context.Context) error {
+	return m.CloseConnectionMockResponse.Error
 }

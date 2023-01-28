@@ -12,6 +12,7 @@ type IMongoClient interface {
 	GetDocumentById(ctx context.Context, recordId primitive.ObjectID) (MongoCursor, error)
 	SaveDocument(ctx context.Context, document interface{}, modelID primitive.ObjectID) (bool, error)
 	CountDocuments(ctx context.Context, filter primitive.M) (int64, error)
+	CloseConnection(ctx context.Context) error
 }
 
 type ClientConfig struct {
@@ -93,4 +94,8 @@ func (c client) CountDocuments(ctx context.Context, filter primitive.M) (int64, 
 		return 0, err
 	}
 	return count, nil
+}
+
+func (c client) CloseConnection(ctx context.Context) error {
+	return c.mClient.Disconnect(ctx)
 }
