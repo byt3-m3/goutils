@@ -67,8 +67,8 @@ func SaveOrUpdateDocument(ctx context.Context, collection *mongo.Collection, mod
 		return nil, err
 	}
 	if result.InsertedID != nil {
-		id := result.InsertedID.(primitive.ObjectID)
-		return &SaveOrUpdateModelResult{IsSuccess: true, ModelId: id}, nil
+
+		return &SaveOrUpdateModelResult{IsSuccess: true, ModelId: result.InsertedID}, nil
 	}
 	return nil, nil
 
