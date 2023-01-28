@@ -9,8 +9,8 @@ import (
 )
 
 type IMongoClient interface {
-	GetDocumentById(ctx context.Context, recordId primitive.ObjectID) (MongoCursor, error)
-	SaveDocument(ctx context.Context, document interface{}, modelID primitive.ObjectID) (bool, error)
+	GetDocumentById(ctx context.Context, recordId interface{}) (MongoCursor, error)
+	SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error)
 	CountDocuments(ctx context.Context, filter primitive.M) (int64, error)
 	CloseConnection(ctx context.Context) error
 }
@@ -52,7 +52,7 @@ func ProvideIMongoClient(cfg *ClientConfig) IMongoClient {
 	}
 }
 
-func (c *client) GetDocumentById(ctx context.Context, recordID primitive.ObjectID) (MongoCursor, error) {
+func (c *client) GetDocumentById(ctx context.Context, recordID interface{}) (MongoCursor, error) {
 	result, err := FindDocument(ctx, c.collection, primitive.M{"_id": recordID})
 	if err != nil {
 		log.Println(err)
@@ -65,7 +65,7 @@ func (c *client) GetDocumentById(ctx context.Context, recordID primitive.ObjectI
 	return result.MongoCursor, nil
 }
 
-func (c *client) SaveDocument(ctx context.Context, document interface{}, modelID primitive.ObjectID) (bool, error) {
+func (c *client) SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error) {
 	res, err := SaveOrUpdateDocument(ctx, c.collection, document, modelID)
 	if err != nil {
 		return false, err

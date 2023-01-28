@@ -16,7 +16,7 @@ type (
 
 	SaveOrUpdateModelResult struct {
 		IsSuccess bool
-		ModelId   primitive.ObjectID
+		ModelId   interface{}
 	}
 )
 
@@ -53,7 +53,7 @@ func FindDocument(ctx context.Context, docFinder MongoCollectionFinder, filter p
 	return FindModelResult{HasData: true, MongoCursor: cur}, nil
 }
 
-func SaveOrUpdateDocument(ctx context.Context, collection *mongo.Collection, model interface{}, modelId primitive.ObjectID) (*SaveOrUpdateModelResult, error) {
+func SaveOrUpdateDocument(ctx context.Context, collection *mongo.Collection, model interface{}, modelId interface{}) (*SaveOrUpdateModelResult, error) {
 	result, err := collection.InsertOne(ctx, model)
 	if err != nil {
 		if strings.Contains(err.Error(), "dup key") {
@@ -95,7 +95,7 @@ func ReplaceDocument(ctx context.Context, collection *mongo.Collection, model in
 
 }
 
-func ReplaceDocumentById(ctx context.Context, collection *mongo.Collection, model interface{}, modelId primitive.ObjectID) error {
+func ReplaceDocumentById(ctx context.Context, collection *mongo.Collection, model interface{}, modelId interface{}) error {
 	return ReplaceDocument(ctx, collection, model, primitive.M{"_id": modelId})
 
 }
