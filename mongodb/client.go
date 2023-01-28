@@ -29,8 +29,8 @@ type client struct {
 func ProvideIMongoClientConfig(mongoUri, dbName, collectionName string) *ClientConfig {
 	return &ClientConfig{
 		MClientConfig:  &MongoClientConfig{MongoURI: mongoUri},
-		CollectionName: dbName,
-		DBName:         collectionName,
+		CollectionName: collectionName,
+		DBName:         dbName,
 	}
 }
 
