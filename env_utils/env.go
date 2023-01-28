@@ -13,3 +13,12 @@ func GetEnvStrict(envVar string) string {
 
 	return val
 }
+
+func GetEnv(envVar, defaultVal string) string {
+	val := os.Getenv(envVar)
+	if len(val) == 0 {
+		return defaultVal
+	}
+
+	return val
+}

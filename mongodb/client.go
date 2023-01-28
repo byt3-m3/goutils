@@ -2,9 +2,9 @@ package mongodb
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/env_utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"goutils/env_utils"
 	"log"
 )
 

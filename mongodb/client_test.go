@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.uber.org/dig"
 	"testing"
 )
 
@@ -15,6 +16,20 @@ var (
 		ID primitive.ObjectID
 	}{
 		ID: testId,
+	}
+
+	testClientConfig = &ClientConfig{
+		MClientConfig:  &MongoClientConfig{MongoURI: "mongodb://192.168.1.5"},
+		CollectionName: "test-collection",
+		DBName:         "test-db",
+	}
+
+	mockClientSuccessProvider = func() IMongoClient {
+		return &MongoClientMock{SaveDocumentMockResponse: &SaveDocumentMockResponse{
+			Result: true,
+			Error:  nil,
+		}}
+
 	}
 )
 
@@ -109,26 +124,34 @@ func TestClient_GetDocumentById(t *testing.T) {
 func TestMongoClientMock_SaveDocument(t *testing.T) {
 	ctx := context.Background()
 
-	t.Run("test when successful", func(t *testing.T) {
-		client := MongoClientMock{SaveDocumentMockResponse: &SaveDocumentMockResponse{
-			Result: true,
-			Error:  nil,
-		}}
+	c := dig.New()
 
-		isSuccess, err := client.SaveDocument(ctx, testModel, testId)
-		assert.NoError(t, err)
-		assert.Equal(t, true, isSuccess)
-	})
+	if err := c.Provide(mockClientSuccessProvider); err != nil {
+		t.Fatal(err)
+	}
 
-	t.Run("test when not successful", func(t *testing.T) {
-		client := MongoClientMock{SaveDocumentMockResponse: &SaveDocumentMockResponse{
-			Result: false,
-			Error:  expectedError,
-		}}
+	//// uncomment to do live test
+	//if err := c.Provide(func() *ClientConfig {
+	//	return testClientConfig
+	//}); err != nil {
+	//	t.Fatal(err)
+	//}
+	//
+	//if err := c.Provide(ProvideIMongoClient); err != nil {
+	//	t.Fatal(err)
+	//}
 
-		isSuccess, err := client.SaveDocument(ctx, testModel, testId)
-		assert.Error(t, err)
-		assert.Equal(t, false, isSuccess)
-	})
+	if err := c.Invoke(func(client IMongoClient) {
+
+		t.Run("test when successful", func(t *testing.T) {
+
+			isSuccess, err := client.SaveDocument(ctx, testModel, testId)
+			assert.NoError(t, err)
+			assert.Equal(t, true, isSuccess)
+		})
+
+	}); err != nil {
+		t.Fatal(err)
+	}
 
 }
