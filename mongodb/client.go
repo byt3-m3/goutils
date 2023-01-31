@@ -13,6 +13,8 @@ type IMongoClient interface {
 	SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error)
 	CountDocuments(ctx context.Context, filter primitive.M) (int64, error)
 	CloseConnection(ctx context.Context) error
+	GetMongoCollection() *mongo.Collection
+	GetMongoClient() *mongo.Client
 }
 
 type ClientConfig struct {
@@ -98,4 +100,12 @@ func (c client) CountDocuments(ctx context.Context, filter primitive.M) (int64, 
 
 func (c client) CloseConnection(ctx context.Context) error {
 	return c.mClient.Disconnect(ctx)
+}
+
+func (c client) GetMongoClient() *mongo.Client {
+	return c.mClient
+}
+
+func (c client) GetMongoCollection() *mongo.Collection {
+	return c.collection
 }
