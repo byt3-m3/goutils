@@ -1,4 +1,4 @@
-package ikafka
+package consumer
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-type IConsumer interface {
+type Consumer interface {
 	ConsumeAsync(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error
 	Consume(ctx context.Context) (*kafka.Message, error)
 }

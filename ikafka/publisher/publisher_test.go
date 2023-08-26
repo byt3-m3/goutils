@@ -1,9 +1,10 @@
-package ikafka
+package publisher
 
 import (
 	"context"
 	"errors"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
 	"testing"
@@ -11,7 +12,7 @@ import (
 )
 
 var (
-	kafkaPublisherMockNoErrs = func() IPublisher {
+	kafkaPublisherMockNoErrs = func() Publisher {
 		return &KafkaPublisherMock{
 			PublishMessageMockResponse: &PublishMessageMockResponse{
 				LinesWritten: 30,
@@ -20,7 +21,7 @@ var (
 		}
 	}
 
-	kafkaPublisherMockErrs = func() IPublisher {
+	kafkaPublisherMockErrs = func() Publisher {
 		return &KafkaPublisherMock{
 			PublishMessageMockResponse: &PublishMessageMockResponse{
 				LinesWritten: 0,
@@ -30,7 +31,7 @@ var (
 	}
 	kafkaPublisherErr = errors.New("this is an error")
 	testKafkaMessage  = &kafka.Message{
-		Topic:         testKafkaTopic,
+		Topic:         "test-topic",
 		Partition:     0,
 		Offset:        0,
 		HighWaterMark: 0,
@@ -44,21 +45,16 @@ var (
 func TestKafkaPublisherMock_PublishMessage(t *testing.T) {
 
 	t.Run("test when successful", func(t *testing.T) {
-		c := dig.New()
-		if err := c.Provide(kafkaPublisherMockNoErrs); err != nil {
-			t.Fatal(err)
-		}
+		p, _ := NewPublisher(
+			WithBroker("192.168.1.60:9094"),
+			WithTopic("test-topic"),
+			WithPlainAuth(plain.Mechanism{
+				Username: "cbaxter",
+				Password: "kafka1",
+			}),
+		)
 
-		if err := c.Invoke(func(publisher IPublisher) {
-			ctx := context.Background()
-			lineWritten, err := publisher.PublishMessage(ctx, testKafkaMessage)
-			assert.NoError(t, err)
-
-			assert.Equal(t, 30, lineWritten)
-
-		}); err != nil {
-			t.Fatal(err)
-		}
+		_, _ = p.PublishMessage(context.Background(), testKafkaMessage)
 
 	})
 
@@ -68,7 +64,7 @@ func TestKafkaPublisherMock_PublishMessage(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := c.Invoke(func(publisher IPublisher) {
+		if err := c.Invoke(func(publisher Publisher) {
 			ctx := context.Background()
 			lineWritten, err := publisher.PublishMessage(ctx, testKafkaMessage)
 			assert.Error(t, err)

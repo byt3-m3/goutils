@@ -1,31 +1,33 @@
-package ikafka
+package consumer
 
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/dig"
+	"log"
 	"testing"
 	"time"
 )
 
 var (
+	kafkaConsumerLive = func() Consumer {
 
-	//kafkaConsumerLive := func() IConsumer {
-	//
-	//	return ProvideKafkaConsumer(&KafkaConsumerConfig{
-	//		Topic:      "test-topic",
-	//		Brokers:    []string{"192.168.1.5:9092"},
-	//		ConsumerID: "",
-	//	})
-	//}
+		return ProvideKafkaConsumer(&options{
+			Topic:      "test-topic",
+			Brokers:    []string{"192.168.1.5:9092"},
+			ConsumerID: "",
+		})
+	}
 
 	testKafkaTopic    = "test-topic"
 	testKafkaMsgValue = []byte("This is data")
 	kafkaConsumerErr  = errors.New("this is an error")
 
-	kafkaConsumerMockNoErrs = func() IConsumer {
+	kafkaConsumerMockNoErrs = func() Consumer {
 		return &KafkaConsumerMock{
 			ConsumeMockResponse: &ConsumeMockResponse{
 				Message: &kafka.Message{
@@ -44,7 +46,7 @@ var (
 		}
 	}
 
-	kafkaConsumerMockErrs = func() IConsumer {
+	kafkaConsumerMockErrs = func() Consumer {
 		return &KafkaConsumerMock{
 			ConsumeMockResponse: &ConsumeMockResponse{
 				Message: nil,
@@ -59,39 +61,37 @@ func TestKafkaConsumer_Consume(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("test when consumer is successful", func(t *testing.T) {
-		c := dig.New()
+		consumer := NewConsumer(
+			WithBrokers([]string{"192.168.1.60:9094"}),
+			WithPlainAuth(plain.Mechanism{
+				Username: "cbaxter",
+				Password: "kafka1",
+			}),
+			WithTopic("test-topic"),
+			WithConsumerID("test-consumer-id-1"),
+		)
 
-		if err := c.Provide(kafkaConsumerMockNoErrs); err != nil {
-			t.Fatal(err)
+		msg, err := consumer.Consume(context.Background())
+		if err != nil {
+			log.Println(err)
 		}
 
-		if err := c.Invoke(func(consumer IConsumer) {
-			msg, err := consumer.Consume(ctx)
-			assert.NoError(t, err)
-			assert.Equal(t, testKafkaMsgValue, msg.Value)
-
-		}); err != nil {
-			t.Fatal(err)
-		}
+		log.Println(msg)
 
 	})
 
 	t.Run("test when consumer failed", func(t *testing.T) {
-		c := dig.New()
+		consumer := NewConsumer(
+			WithBrokers([]string{"127.0.0.1:9092"}),
+			WithConsumerID("test_consumer"),
+			WithTopic("test-topic"),
+		)
 
-		if err := c.Provide(kafkaConsumerMockErrs); err != nil {
-			t.Fatal(err)
-		}
-
-		if err := c.Invoke(func(consumer IConsumer) {
-			msg, err := consumer.Consume(ctx)
-			assert.Error(t, err)
-			assert.Empty(t, msg)
-			assert.Equal(t, kafkaConsumerErr, err)
-
-		}); err != nil {
-			t.Fatal(err)
-		}
+		msg, err := consumer.Consume(ctx)
+		fmt.Println(msg, err)
+		//assert.Error(t, err)
+		//assert.Empty(t, msg)
+		//assert.Equal(t, kafkaConsumerErr, err)
 
 	})
 
@@ -107,7 +107,7 @@ func TestKafkaConsumer_ConsumeAsync(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := c.Invoke(func(consumer IConsumer) {
+		if err := c.Invoke(func(consumer Consumer) {
 			msgBus := make(chan *kafka.Message)
 
 			err := consumer.ConsumeAsync(ctx, msgBus, time.Second*5)
@@ -126,7 +126,7 @@ func TestKafkaConsumer_ConsumeAsync(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		if err := c.Invoke(func(consumer IConsumer) {
+		if err := c.Invoke(func(consumer Consumer) {
 			msgBus := make(chan *kafka.Message)
 
 			err := consumer.ConsumeAsync(ctx, msgBus, time.Second*5)

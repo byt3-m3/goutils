@@ -1,4 +1,4 @@
-package ikafka
+package consumer
 
 import (
 	"context"

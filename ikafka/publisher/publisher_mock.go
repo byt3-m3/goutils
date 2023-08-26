@@ -1,4 +1,4 @@
-package ikafka
+package publisher
 
 import (
 	"context"
