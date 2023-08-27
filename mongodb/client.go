@@ -2,25 +2,47 @@ package mongodb
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/env_utils"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"log"
 )
 
-type IMongoClient interface {
+type clientOpt func(c *client)
+type WithMongoClientInput struct {
+}
+
+var (
+	WithCollection = func(dbName, collection string) clientOpt {
+		return func(c *client) {
+			c.collection = c.mClient.Database(dbName).Collection(collection)
+		}
+	}
+
+	WithMongoClient = func(mongoUri string, opts *options.ClientOptions) clientOpt {
+		return func(c *client) {
+			opts.ApplyURI(mongoUri)
+
+			newClient, err := mongo.NewClient(opts)
+			if err != nil {
+				log.Fatalln(err)
+			}
+			if err := newClient.Connect(context.Background()); err != nil {
+				log.Println(err)
+			}
+			c.mClient = newClient
+		}
+	}
+)
+
+type MongoClient interface {
 	GetDocumentById(ctx context.Context, recordId interface{}) (MongoCursor, error)
 	SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error)
 	CountDocuments(ctx context.Context, filter primitive.M) (int64, error)
 	CloseConnection(ctx context.Context) error
 	GetMongoCollection() *mongo.Collection
 	GetMongoClient() *mongo.Client
-}
-
-type ClientConfig struct {
-	MClientConfig  *MongoClientConfig
-	CollectionName string
-	DBName         string
+	ScanCollection(ctx context.Context) (MongoCursor, error)
 }
 
 type client struct {
@@ -28,30 +50,32 @@ type client struct {
 	collection *mongo.Collection
 }
 
-func ProvideIMongoClientConfig(mongoUri, dbName, collectionName string) *ClientConfig {
-	return &ClientConfig{
-		MClientConfig:  &MongoClientConfig{MongoURI: mongoUri},
-		CollectionName: collectionName,
-		DBName:         dbName,
+func NewClient(opts ...clientOpt) MongoClient {
+	c := &client{}
+
+	for _, opt := range opts {
+		opt(c)
 	}
+	if !validateClient(c) {
+		log.Fatalln("failed client validation")
+	}
+
+	return c
+
 }
 
-func ProvideIMongoClientConfigFromEnv(dbName, collectionName string) *ClientConfig {
-	return &ClientConfig{
-		MClientConfig:  &MongoClientConfig{MongoURI: env_utils.GetEnvStrict("MONGO_URI")},
-		CollectionName: collectionName,
-		DBName:         dbName,
+func validateClient(c *client) bool {
+	if c.collection == nil {
+		log.Println("collection not set, use WithCollection")
+		return false
 	}
-}
 
-func ProvideIMongoClient(cfg *ClientConfig) IMongoClient {
-	mClient := getMongoClientV1(cfg.MClientConfig)
-	collection := GetCollectionV1(mClient, cfg.DBName, cfg.CollectionName)
-
-	return &client{
-		mClient:    mClient,
-		collection: collection,
+	if c.mClient == nil {
+		log.Println("collection not set, use WithCollection")
+		return false
 	}
+
+	return true
 }
 
 func (c *client) GetDocumentById(ctx context.Context, recordID interface{}) (MongoCursor, error) {
@@ -77,7 +101,7 @@ func (c *client) SaveDocument(ctx context.Context, document interface{}, modelID
 
 }
 
-func (c *client) ScanCollection(ctx context.Context) (*mongo.Cursor, error) {
+func (c *client) ScanCollection(ctx context.Context) (MongoCursor, error) {
 	res, err := FindDocument(ctx, c.collection, primitive.M{})
 	if err != nil {
 		return nil, err
@@ -90,7 +114,7 @@ func (c *client) ScanCollection(ctx context.Context) (*mongo.Cursor, error) {
 	return res.MongoCursor, err
 }
 
-func (c client) CountDocuments(ctx context.Context, filter primitive.M) (int64, error) {
+func (c *client) CountDocuments(ctx context.Context, filter primitive.M) (int64, error) {
 	count, err := c.collection.CountDocuments(ctx, filter)
 	if err != nil {
 		return 0, err
@@ -98,14 +122,14 @@ func (c client) CountDocuments(ctx context.Context, filter primitive.M) (int64, 
 	return count, nil
 }
 
-func (c client) CloseConnection(ctx context.Context) error {
+func (c *client) CloseConnection(ctx context.Context) error {
 	return c.mClient.Disconnect(ctx)
 }
 
-func (c client) GetMongoClient() *mongo.Client {
+func (c *client) GetMongoClient() *mongo.Client {
 	return c.mClient
 }
 
-func (c client) GetMongoCollection() *mongo.Collection {
+func (c *client) GetMongoCollection() *mongo.Collection {
 	return c.collection
 }

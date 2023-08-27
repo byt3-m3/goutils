@@ -3,8 +3,10 @@ package mongodb
 import (
 	"context"
 	"errors"
+	"fmt"
 	"github.com/stretchr/testify/assert"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"go.mongodb.org/mongo-driver/mongo/options"
 	"go.uber.org/dig"
 	"testing"
 )
@@ -18,18 +20,15 @@ var (
 		ID: testId,
 	}
 
-	testClientConfig = &ClientConfig{
-		MClientConfig:  &MongoClientConfig{MongoURI: "mongodb://192.168.1.5"},
-		CollectionName: "test-collection",
-		DBName:         "test-db",
-	}
-
-	mockClientSuccessProvider = func() IMongoClient {
-		return &MongoClientMock{SaveDocumentMockResponse: &SaveDocumentMockResponse{
-			Result: true,
-			Error:  nil,
-		}}
-
+	mockClientSuccessProvider = func() MongoClient {
+		return &StubMongoClient{
+			SaveDocumentStubResponse: func(ctx context.Context, document interface{}, modelID interface{}) SaveDocumentStubResponse {
+				return SaveDocumentStubResponse{
+					Result: true,
+					Error:  nil,
+				}
+			},
+		}
 	}
 )
 
@@ -37,21 +36,32 @@ func TestClient_CountDocuments(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("test when successful", func(t *testing.T) {
-		client := MongoClientMock{
-			CountDocumentsMockResponse: &CountDocumentsMockResponse{
-				Count: 10,
-				Error: nil,
+		client := StubMongoClient{
+			CountDocumentsStubResponse: func(ctx context.Context, filter primitive.M) CountDocumentsStubResponse {
+
+				return CountDocumentsStubResponse{
+					Count: 10,
+					Error: nil,
+				}
 			},
-			SaveDocumentMockResponse: &SaveDocumentMockResponse{
-				Result: true,
-				Error:  nil,
+			SaveDocumentStubResponse: func(ctx context.Context, document interface{}, modelID interface{}) SaveDocumentStubResponse {
+
+				return SaveDocumentStubResponse{
+					Result: true,
+					Error:  nil,
+				}
 			},
-			GetDocumentByIdMockResponse: &GetDocumentByIdMockResponse{
-				Cursor: &MongoCursorMock{
-					DecodeMockResult: DecodeMockResult{
-						Error: nil,
+			GetDocumentByIdStubResponse: func(ctx context.Context, recordId interface{}) GetDocumentByIdStubResponse {
+
+				return GetDocumentByIdStubResponse{
+					Cursor: &StubMongoCursor{
+						DecodeStubResult: func(val interface{}) DecodeStubResult {
+							return DecodeStubResult{
+								Error: nil,
+							}
+						},
 					},
-				},
+				}
 			},
 		}
 
@@ -62,13 +72,15 @@ func TestClient_CountDocuments(t *testing.T) {
 	})
 
 	t.Run("test when error", func(t *testing.T) {
-		client := MongoClientMock{
-			CountDocumentsMockResponse: &CountDocumentsMockResponse{
-				Count: 0,
-				Error: expectedError,
+		client := StubMongoClient{
+			CountDocumentsStubResponse: func(ctx context.Context, filter primitive.M) CountDocumentsStubResponse {
+				return CountDocumentsStubResponse{
+					Count: 0,
+					Error: expectedError,
+				}
 			},
-			SaveDocumentMockResponse:    nil,
-			GetDocumentByIdMockResponse: nil,
+			SaveDocumentStubResponse:    nil,
+			GetDocumentByIdStubResponse: nil,
 		}
 
 		count, err := client.CountDocuments(ctx, primitive.M{"_id": "fake_id"})
@@ -82,15 +94,17 @@ func TestClient_GetDocumentById(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("test when successful", func(t *testing.T) {
-		client := MongoClientMock{
-			CountDocumentsMockResponse: nil,
-			SaveDocumentMockResponse:   nil,
-			GetDocumentByIdMockResponse: &GetDocumentByIdMockResponse{
-				Cursor: &MongoCursorMock{
-					DecodeMockResult: DecodeMockResult{
-						Error: nil,
+		client := StubMongoClient{
+			CountDocumentsStubResponse: nil,
+			SaveDocumentStubResponse:   nil,
+			GetDocumentByIdStubResponse: func(ctx context.Context, recordId interface{}) GetDocumentByIdStubResponse {
+				return GetDocumentByIdStubResponse{
+					Cursor: &StubMongoCursor{
+						DecodeStubResult: func(val interface{}) DecodeStubResult {
+							return DecodeStubResult{}
+						},
 					},
-				},
+				}
 			},
 		}
 
@@ -100,16 +114,20 @@ func TestClient_GetDocumentById(t *testing.T) {
 	})
 
 	t.Run("test when not successful", func(t *testing.T) {
-		client := MongoClientMock{
-			CountDocumentsMockResponse: nil,
-			SaveDocumentMockResponse:   nil,
-			GetDocumentByIdMockResponse: &GetDocumentByIdMockResponse{
-				Error: expectedError,
-				Cursor: &MongoCursorMock{
-					DecodeMockResult: DecodeMockResult{
-						Error: expectedError,
+		client := StubMongoClient{
+			CountDocumentsStubResponse: nil,
+			SaveDocumentStubResponse:   nil,
+			GetDocumentByIdStubResponse: func(ctx context.Context, recordId interface{}) GetDocumentByIdStubResponse {
+				return GetDocumentByIdStubResponse{
+					Error: expectedError,
+					Cursor: &StubMongoCursor{
+						DecodeStubResult: func(val interface{}) DecodeStubResult {
+							return DecodeStubResult{
+								Error: expectedError,
+							}
+						},
 					},
-				},
+				}
 			},
 		}
 
@@ -141,7 +159,7 @@ func TestMongoClientMock_SaveDocument(t *testing.T) {
 	//	t.Fatal(err)
 	//}
 
-	if err := c.Invoke(func(client IMongoClient) {
+	if err := c.Invoke(func(client MongoClient) {
 
 		t.Run("test when successful", func(t *testing.T) {
 
@@ -154,4 +172,14 @@ func TestMongoClientMock_SaveDocument(t *testing.T) {
 		t.Fatal(err)
 	}
 
+}
+
+func TestName(t *testing.T) {
+	c := NewClient(
+		WithMongoClient("mongodb://root:mongo@192.168.1.58", &options.ClientOptions{}),
+		WithCollection("test-db", "test-collection"),
+	)
+	count, err := c.SaveDocument(context.TODO(), map[string]string{"test": "test"}, "1")
+
+	fmt.Println(err, count)
 }

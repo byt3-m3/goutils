@@ -6,32 +6,32 @@ import (
 )
 
 type (
-	DecodeMockResult struct {
+	DecodeStubResult struct {
 		Error error
 	}
 )
 
-type MongoCursorMock struct {
+type StubMongoCursor struct {
 	mock.Mock
-	DecodeMockResult DecodeMockResult
+	DecodeStubResult func(val interface{}) DecodeStubResult
 }
 
-func (m *MongoCursorMock) Decode(val interface{}) error {
-	return m.DecodeMockResult.Error
+func (m *StubMongoCursor) Decode(val interface{}) error {
+	return m.DecodeStubResult(val).Error
 }
 
-func (m *MongoCursorMock) Err() error {
+func (m *StubMongoCursor) Err() error {
 	return nil
 }
 
-func (m *MongoCursorMock) Next(ctx context.Context) bool {
+func (m *StubMongoCursor) Next(ctx context.Context) bool {
 	return true
 }
 
-func (m *MongoCursorMock) Close(ctx context.Context) error {
+func (m *StubMongoCursor) Close(ctx context.Context) error {
 	return nil
 }
 
-func (m *MongoCursorMock) ID() int64 {
+func (m *StubMongoCursor) ID() int64 {
 	return 0
 }
