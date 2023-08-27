@@ -74,6 +74,7 @@ type Consumer interface {
 	GetConnection() *amqp091.Connection
 	GetAdminClient() admin.Client
 	IsClosed() bool
+	GetActiveChannel() *amqp091.Channel
 }
 
 type consumer struct {

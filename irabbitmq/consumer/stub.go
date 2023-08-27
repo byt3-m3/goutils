@@ -7,10 +7,19 @@ import (
 )
 
 type StubConsumer struct {
-	ConsumeReturn        func(ctx context.Context, queue string) ConsumeStubReturn
-	GetConnectionReturn  func() GetConnectionStubReturn
-	GetAdminClientReturn func() GetAdminClientStubReturn
-	IsClosedReturn       func() IsClosedStubReturn
+	ConsumeReturn              func(ctx context.Context, queue string) ConsumeStubReturn
+	GetConnectionReturn        func() GetConnectionStubReturn
+	GetAdminClientReturn       func() GetAdminClientStubReturn
+	IsClosedReturn             func() IsClosedStubReturn
+	GetActiveChannelStubReturn func() GetActiveChannelStubReturn
+}
+
+type GetActiveChannelStubReturn struct {
+	Channel *amqp091.Channel
+}
+
+func (s *StubConsumer) GetActiveChannel() *amqp091.Channel {
+	return s.GetActiveChannelStubReturn().Channel
 }
 
 type ConsumeStubReturn struct {
