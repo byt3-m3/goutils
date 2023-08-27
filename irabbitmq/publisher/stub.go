@@ -18,7 +18,7 @@ type PublishStubReturn struct {
 	Error error
 }
 
-func (s StubPublisher) Publish(ctx context.Context, input *PublishInput) error {
+func (s *StubPublisher) Publish(ctx context.Context, input *PublishInput) error {
 	return s.PublishStubReturn(ctx, input).Error
 }
 
@@ -26,7 +26,7 @@ type GetConnectionStubReturn struct {
 	Conn *amqp091.Connection
 }
 
-func (s StubPublisher) GetConnection() *amqp091.Connection {
+func (s *StubPublisher) GetConnection() *amqp091.Connection {
 	return s.GetConnectionStubReturn().Conn
 }
 
@@ -34,7 +34,7 @@ type GetAdminClientStubReturn struct {
 	Client admin.Client
 }
 
-func (s StubPublisher) GetAdminClient() admin.Client {
+func (s *StubPublisher) GetAdminClient() admin.Client {
 	return s.GetAdminClientStubReturn().Client
 }
 
@@ -42,7 +42,7 @@ type ResetConnectionStubReturn struct {
 	Error error
 }
 
-func (s StubPublisher) ResetConnection() error {
+func (s *StubPublisher) ResetConnection() error {
 	return s.ResetConnectionStubReturn().Error
 }
 
@@ -50,6 +50,6 @@ type IsClosedStubReturn struct {
 	IsClosed bool
 }
 
-func (s StubPublisher) IsClosed() bool {
+func (s *StubPublisher) IsClosed() bool {
 	return s.IsClosedStubReturn().IsClosed
 }

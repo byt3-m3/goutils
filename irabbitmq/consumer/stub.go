@@ -18,7 +18,7 @@ type ConsumeStubReturn struct {
 	Err          error
 }
 
-func (s StubConsumer) Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error) {
+func (s *StubConsumer) Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error) {
 	res := s.ConsumeReturn(ctx, queue)
 	return res.DeliveryChan, res.Err
 }
@@ -27,7 +27,7 @@ type GetConnectionStubReturn struct {
 	Conn *amqp091.Connection
 }
 
-func (s StubConsumer) GetConnection() *amqp091.Connection {
+func (s *StubConsumer) GetConnection() *amqp091.Connection {
 	return s.GetConnectionReturn().Conn
 }
 
@@ -35,7 +35,7 @@ type GetAdminClientStubReturn struct {
 	Client admin.Client
 }
 
-func (s StubConsumer) GetAdminClient() admin.Client {
+func (s *StubConsumer) GetAdminClient() admin.Client {
 	return s.GetAdminClientReturn().Client
 }
 
@@ -43,6 +43,6 @@ type IsClosedStubReturn struct {
 	Bool bool
 }
 
-func (s StubConsumer) IsClosed() bool {
+func (s *StubConsumer) IsClosed() bool {
 	return s.IsClosedReturn().Bool
 }

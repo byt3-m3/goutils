@@ -14,7 +14,7 @@ type PublishMessageStubReturn struct {
 	Error error
 }
 
-func (s StubKafkaPublisher) PublishMessage(ctx context.Context, msg *kafka.Message) (int, error) {
+func (s *StubKafkaPublisher) PublishMessage(ctx context.Context, msg *kafka.Message) (int, error) {
 	res := s.PublishMessageStubReturn(ctx, msg)
 	return res.Count, res.Error
 }

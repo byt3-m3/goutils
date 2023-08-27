@@ -15,7 +15,7 @@ type ConsumeAsyncStubReturn struct {
 	Error error
 }
 
-func (s StubKafkaConsumer) ConsumeAsync(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
+func (s *StubKafkaConsumer) ConsumeAsync(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
 	return s.ConsumeAsyncStubReturn(ctx, msgBus, tickerRate).Error
 }
 
@@ -24,7 +24,7 @@ type ConsumeStubReturn struct {
 	Error   error
 }
 
-func (s StubKafkaConsumer) Consume(ctx context.Context) (*kafka.Message, error) {
+func (s *StubKafkaConsumer) Consume(ctx context.Context) (*kafka.Message, error) {
 	res := s.ConsumeStubReturn(ctx)
 	return res.Message, res.Error
 }
