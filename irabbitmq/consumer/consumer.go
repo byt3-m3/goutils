@@ -85,6 +85,7 @@ type consumer struct {
 	logger        *log.Logger
 	prefetchCount int
 	adminClient   admin.Client
+	activeChannel *amqp091.Channel
 }
 
 func NewConsumer(opts ...consumerOpt) Consumer {
@@ -123,13 +124,8 @@ func NewConsumer(opts ...consumerOpt) Consumer {
 }
 
 func (c *consumer) Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error) {
-	if c.IsClosed() {
-		c.ResetConnection()
-	}
 
-	ch, err := c.conn.Channel()
-
-	defer ch.Close()
+	ch, err := c.getChannel()
 
 	if err := ch.Qos(c.prefetchCount, 0, false); err != nil {
 		return nil, err
@@ -176,4 +172,23 @@ func (c *consumer) ResetConnection() {
 	}
 
 	c.conn = cConn
+}
+
+func (c *consumer) getChannel() (*amqp091.Channel, error) {
+	if c.IsClosed() {
+		c.ResetConnection()
+	}
+
+	ch, err := c.conn.Channel()
+	if err != nil {
+		c.logger.Println(err)
+	}
+
+	c.activeChannel = ch
+
+	return c.activeChannel, nil
+}
+
+func (c *consumer) GetActiveChannel() *amqp091.Channel {
+	return c.activeChannel
 }
