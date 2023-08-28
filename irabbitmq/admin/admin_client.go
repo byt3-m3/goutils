@@ -120,7 +120,7 @@ type CreateQueueInput struct {
 	CanNoWait     bool
 }
 
-func (c adminClient) CreateQueue(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error) {
+func (c *adminClient) CreateQueue(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error) {
 
 	ch, err := c.getChannel()
 	if err != nil {
@@ -146,7 +146,7 @@ type BindQueueInput struct {
 	Args      amqp091.Table
 }
 
-func (c adminClient) BindQueue(ctx context.Context, input *BindQueueInput) error {
+func (c *adminClient) BindQueue(ctx context.Context, input *BindQueueInput) error {
 	ch, err := c.getChannel()
 	if err != nil {
 		log.Print(err)
@@ -175,7 +175,7 @@ type CreateExchangeInput struct {
 	CanNoWait     bool
 }
 
-func (c adminClient) CreateExchange(ctx context.Context, input *CreateExchangeInput) error {
+func (c *adminClient) CreateExchange(ctx context.Context, input *CreateExchangeInput) error {
 	ch, err := c.getChannel()
 	if err != nil {
 		log.Print(err)
@@ -194,7 +194,7 @@ func (c adminClient) CreateExchange(ctx context.Context, input *CreateExchangeIn
 
 }
 
-func (c adminClient) getChannel() (*amqp091.Channel, error) {
+func (c *adminClient) getChannel() (*amqp091.Channel, error) {
 	if c.conn.IsClosed() {
 		c.setConnection()
 	}
@@ -203,7 +203,7 @@ func (c adminClient) getChannel() (*amqp091.Channel, error) {
 
 }
 
-func (c adminClient) GetConnection() *amqp091.Connection {
+func (c *adminClient) GetConnection() *amqp091.Connection {
 	return c.conn
 }
 
@@ -214,7 +214,7 @@ type DeleteQueueInput struct {
 	NoWait   bool
 }
 
-func (c adminClient) DeleteQueue(ctx context.Context, input *DeleteQueueInput) error {
+func (c *adminClient) DeleteQueue(ctx context.Context, input *DeleteQueueInput) error {
 	ch, err := c.conn.Channel()
 	if err != nil {
 		log.Println(err)
@@ -232,7 +232,7 @@ type DeleteExchangeInput struct {
 	NoWait   bool
 }
 
-func (c adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeInput) error {
+func (c *adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeInput) error {
 	ch, err := c.conn.Channel()
 	if err != nil {
 		log.Println(err)
@@ -243,7 +243,7 @@ func (c adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeIn
 
 }
 
-func (c adminClient) setConnection() {
+func (c *adminClient) setConnection() {
 	cConn, err := amqp091.DialConfig(c.amqpUrl, amqp091.Config{
 		SASL:            []amqp091.Authentication{c.amqpAuth},
 		Vhost:           c.vHost,
