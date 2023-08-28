@@ -195,6 +195,10 @@ func (c adminClient) CreateExchange(ctx context.Context, input *CreateExchangeIn
 }
 
 func (c adminClient) getChannel() (*amqp091.Channel, error) {
+	if c.conn.IsClosed() {
+		c.setConnection()
+	}
+
 	return c.conn.Channel()
 
 }
@@ -237,4 +241,24 @@ func (c adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeIn
 
 	return ch.ExchangeDelete(input.Name, input.IfUnUsed, input.NoWait)
 
+}
+
+func (c adminClient) setConnection() {
+	cConn, err := amqp091.DialConfig(c.amqpUrl, amqp091.Config{
+		SASL:            []amqp091.Authentication{c.amqpAuth},
+		Vhost:           c.vHost,
+		ChannelMax:      0,
+		FrameSize:       0,
+		Heartbeat:       0,
+		TLSClientConfig: nil,
+		Properties:      nil,
+		Locale:          "",
+		Dial:            nil,
+	})
+
+	if err != nil {
+		log.Println(err)
+	}
+
+	c.conn = cConn
 }
