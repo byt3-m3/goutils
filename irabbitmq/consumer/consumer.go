@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/irabbitmq/admin"
 	"github.com/rabbitmq/amqp091-go"
 	"log"
 )
@@ -72,7 +71,6 @@ func validateConsumer(c *consumer) bool {
 type Consumer interface {
 	Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
 	GetConnection() *amqp091.Connection
-	GetAdminClient() admin.Client
 	IsClosed() bool
 	GetActiveChannel() *amqp091.Channel
 }
@@ -85,7 +83,6 @@ type consumer struct {
 	amqpAuth      amqp091.Authentication
 	logger        *log.Logger
 	prefetchCount int
-	adminClient   admin.Client
 	activeChannel *amqp091.Channel
 }
 
@@ -108,16 +105,6 @@ func NewConsumer(opts ...consumerOpt) Consumer {
 		c.logger.Println("creating connection")
 		c.ResetConnection()
 
-	}
-
-	if c.adminClient == nil {
-		c.logger.Println("creating admin client")
-		ac := admin.NewAdminClient(
-			admin.WithConnection(c.conn),
-			admin.WithAMQPUrl(c.amqpUrl),
-		)
-
-		c.adminClient = ac
 	}
 
 	return c
@@ -145,10 +132,6 @@ func (c *consumer) Consume(ctx context.Context, queue string) (<-chan amqp091.De
 
 func (c *consumer) GetConnection() *amqp091.Connection {
 	return c.conn
-}
-
-func (c *consumer) GetAdminClient() admin.Client {
-	return c.adminClient
 }
 
 func (c *consumer) IsClosed() bool {

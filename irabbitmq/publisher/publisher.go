@@ -2,7 +2,6 @@ package publisher
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/irabbitmq/admin"
 	"github.com/rabbitmq/amqp091-go"
 	"log"
 	"time"
@@ -20,12 +19,6 @@ var (
 	WithVHost = func(vhost string) publisherOpt {
 		return func(pub *publisher) {
 			pub.vHost = vhost
-		}
-	}
-
-	WithAdminClient = func(c admin.Client) publisherOpt {
-		return func(pub *publisher) {
-			pub.adminClient = c
 		}
 	}
 
@@ -54,18 +47,16 @@ var (
 type Publisher interface {
 	Publish(ctx context.Context, input *PublishInput) error
 	GetConnection() *amqp091.Connection
-	GetAdminClient() admin.Client
 	ResetConnection() error
 	IsClosed() bool
 }
 
 type publisher struct {
-	amqpUrl     string
-	vHost       string
-	logger      *log.Logger
-	conn        *amqp091.Connection
-	amqpAuth    amqp091.Authentication
-	adminClient admin.Client
+	amqpUrl  string
+	vHost    string
+	logger   *log.Logger
+	conn     *amqp091.Connection
+	amqpAuth amqp091.Authentication
 }
 
 func NewPublisher(opts ...publisherOpt) Publisher {
@@ -88,17 +79,6 @@ func NewPublisher(opts ...publisherOpt) Publisher {
 		if err := p.ResetConnection(); err != nil {
 			p.logger.Fatalln(err)
 		}
-	}
-
-	if p.adminClient == nil {
-
-		ac := admin.NewAdminClient(
-			admin.WithConnection(p.conn),
-			admin.WithAMQPUrl(p.amqpUrl),
-		)
-
-		p.adminClient = ac
-
 	}
 
 	return p
@@ -165,10 +145,6 @@ func (p *publisher) Publish(ctx context.Context, input *PublishInput) error {
 
 func (p *publisher) GetConnection() *amqp091.Connection {
 	return p.conn
-}
-
-func (p *publisher) GetAdminClient() admin.Client {
-	return p.adminClient
 }
 
 func (p *publisher) ResetConnection() error {
