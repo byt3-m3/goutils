@@ -104,7 +104,9 @@ func NewAdminClient(opts ...adminClientOpt) Client {
 }
 
 func validateClient(client *adminClient) bool {
-	if client.amqpUrl == "" {
+
+	switch {
+	case client.amqpUrl == "":
 		log.Println("amqpUrl not set, use WithAMQPUrl")
 		return false
 	}
