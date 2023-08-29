@@ -8,13 +8,12 @@ import (
 )
 
 func TestNewConsumer(t *testing.T) {
-	c := NewConsumer(
-		WithAMQPUrl(env_utils.GetEnvStrict("AMQP_URL")),
-		WithPlainAuth(env_utils.GetEnvStrict("AMQP_USERNAME"), env_utils.GetEnvStrict("AMQP_PASSWORD")),
-		WithConsumerID("test-consumer-id"),
-		WithVhost("/"),
-		WithPreFetchCount(1),
-	)
+	c := New().
+		WithAMQPUrl(env_utils.GetEnvStrict("AMQP_URL")).
+		WithPlainAuth(env_utils.GetEnvStrict("AMQP_USERNAME"), env_utils.GetEnvStrict("AMQP_PASSWORD")).
+		WithConsumerID("test-consumer-id").
+		WithVHost("/").
+		WithPreFetchCount(1)
 
 	delivery, err := c.Consume(context.Background(), "test-queue")
 	if err != nil {

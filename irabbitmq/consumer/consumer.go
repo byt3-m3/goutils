@@ -3,77 +3,8 @@ package consumer
 import (
 	"context"
 	"github.com/rabbitmq/amqp091-go"
-	"log"
+	log "github.com/sirupsen/logrus"
 )
-
-type consumerOpt func(c *consumer)
-
-var (
-	WithAMQPUrl = func(url string) consumerOpt {
-		return func(c *consumer) {
-			c.amqpUrl = url
-		}
-	}
-
-	WithConsumerID = func(id string) consumerOpt {
-		return func(c *consumer) {
-			c.consumerID = id
-		}
-	}
-
-	WithVhost = func(vhost string) consumerOpt {
-		return func(c *consumer) {
-			c.vHost = vhost
-		}
-	}
-
-	WithPlainAuth = func(username, password string) consumerOpt {
-		return func(c *consumer) {
-			c.amqpAuth = &amqp091.PlainAuth{
-				Username: username,
-				Password: password,
-			}
-		}
-	}
-
-	WithPreFetchCount = func(count int) consumerOpt {
-		return func(c *consumer) {
-			c.prefetchCount = count
-		}
-	}
-
-	WithLogger = func(logger *log.Logger) consumerOpt {
-		return func(c *consumer) {
-			c.logger = logger
-		}
-	}
-)
-
-func validateConsumer(c *consumer) bool {
-	if c.consumerID == "" {
-		log.Println("consumer id not set, use WithConsumerID")
-		return false
-	}
-
-	if c.amqpUrl == "" {
-		log.Println("AMQPUrl not set. use WithAMPQURL")
-		return false
-	}
-
-	if c.amqpUrl == "" {
-		log.Println("AMQPUrl not set. use WithAMPQURL")
-		return false
-	}
-
-	return true
-}
-
-type Consumer interface {
-	Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
-	GetConnection() *amqp091.Connection
-	IsClosed() bool
-	GetActiveChannel() *amqp091.Channel
-}
 
 type consumer struct {
 	amqpUrl       string
@@ -86,32 +17,65 @@ type consumer struct {
 	activeChannel *amqp091.Channel
 }
 
-func NewConsumer(opts ...consumerOpt) Consumer {
+func New() RabbitMQConsumer {
 	c := &consumer{}
-
-	for _, opt := range opts {
-		opt(c)
-	}
-
-	if c.logger == nil {
-		c.logger = log.Default()
-	}
-
-	if !validateConsumer(c) {
-		c.logger.Fatalln("failed option validation")
-	}
-
-	if c.conn == nil {
-		c.logger.Println("creating connection")
-		c.ResetConnection()
-
-	}
 
 	return c
 
 }
 
+func (c *consumer) MustValidate() {
+
+	switch {
+	case c.consumerID == "":
+		panic("consumerID not set")
+
+	case c.amqpUrl == "":
+		panic("AMQPUrl not set")
+
+	case c.conn == nil:
+
+		c.ResetConnection()
+
+	}
+
+}
+
+func (c *consumer) WithAMQPUrl(url string) RabbitMQConsumer {
+	c.amqpUrl = url
+	return c
+}
+
+func (c *consumer) WithConsumerID(id string) RabbitMQConsumer {
+	c.consumerID = id
+	return c
+}
+
+func (c *consumer) WithVHost(vhost string) RabbitMQConsumer {
+	c.vHost = vhost
+	return c
+}
+
+func (c *consumer) WithPlainAuth(username, password string) RabbitMQConsumer {
+	c.amqpAuth = &amqp091.PlainAuth{
+		Username: username,
+		Password: password,
+	}
+	return c
+}
+
+func (c *consumer) WithPreFetchCount(count int) RabbitMQConsumer {
+	c.prefetchCount = count
+	return c
+}
+
+func (c *consumer) WithLogger(logger *log.Logger) RabbitMQConsumer {
+	c.logger = logger
+	return c
+}
+
 func (c *consumer) Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error) {
+	c.MustValidate()
 
 	ch, err := c.getChannel()
 
