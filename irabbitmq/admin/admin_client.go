@@ -6,61 +6,6 @@ import (
 	"log"
 )
 
-type adminClientOpt = func(client *adminClient)
-
-type AMQPExchangeType string
-
-var (
-	AMQPExchangeTypeDirect  AMQPExchangeType = "direct"
-	AMQPExchangeTypeFanout  AMQPExchangeType = "fanout"
-	AMQPExchangeTypeHeaders AMQPExchangeType = "headers"
-	AMQPExchangeTypeTopic   AMQPExchangeType = "topic"
-
-	WithAMQPUrl = func(url string) adminClientOpt {
-
-		return func(client *adminClient) {
-			client.amqpUrl = url
-		}
-	}
-
-	WithPlainAuth = func(username, password string) adminClientOpt {
-		return func(client *adminClient) {
-			client.amqpAuth = &amqp091.PlainAuth{
-				Username: username,
-				Password: password,
-			}
-		}
-	}
-
-	WithVhost = func(vhost string) adminClientOpt {
-
-		return func(client *adminClient) {
-			client.vHost = vhost
-		}
-	}
-
-	WithConnection = func(conn *amqp091.Connection) adminClientOpt {
-
-		return func(client *adminClient) {
-			client.conn = conn
-		}
-	}
-)
-
-type Client interface {
-	CreateQueue(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error)
-
-	CreateExchange(ctx context.Context, input *CreateExchangeInput) error
-
-	BindQueue(ctx context.Context, input *BindQueueInput) error
-
-	GetConnection() *amqp091.Connection
-
-	DeleteQueue(ctx context.Context, input *DeleteQueueInput) error
-
-	DeleteExchange(ctx context.Context, input *DeleteExchangeInput) error
-}
-
 type adminClient struct {
 	amqpUrl  string
 	conn     *amqp091.Connection
@@ -68,21 +13,24 @@ type adminClient struct {
 	vHost    string
 }
 
-func NewAdminClient(opts ...adminClientOpt) Client {
+func New() Client {
 	c := &adminClient{}
-	for _, opt := range opts {
-		opt(c)
-	}
 
-	if !validateClient(c) {
-		log.Fatalln("failed validation")
-	}
+	return c
 
-	if c.conn == nil {
+}
 
-		conn, err := amqp091.DialConfig(c.amqpUrl, amqp091.Config{
-			SASL:            []amqp091.Authentication{c.amqpAuth},
-			Vhost:           c.vHost,
+func (c *adminClient) ValidateClient(client *adminClient) bool {
+
+	switch {
+	case client.amqpUrl == "":
+		log.Println("amqpUrl not set, use WithAMQPUrl")
+		return false
+
+	case client.conn == nil:
+		conn, err := amqp091.DialConfig(client.amqpUrl, amqp091.Config{
+			SASL:            []amqp091.Authentication{client.amqpAuth},
+			Vhost:           client.vHost,
 			ChannelMax:      0,
 			FrameSize:       0,
 			Heartbeat:       0,
@@ -96,22 +44,35 @@ func NewAdminClient(opts ...adminClientOpt) Client {
 			log.Print(err)
 		}
 
-		c.conn = conn
-	}
+		client.conn = conn
 
-	return c
-
-}
-
-func validateClient(client *adminClient) bool {
-
-	switch {
-	case client.amqpUrl == "":
-		log.Println("amqpUrl not set, use WithAMQPUrl")
-		return false
 	}
 
 	return true
+}
+
+func (c *adminClient) WithAMQPUrl(url string) Client {
+	c.amqpUrl = url
+
+	return c
+}
+
+func (c *adminClient) WithVHost(vhost string) Client {
+	c.vHost = vhost
+	return c
+}
+func (c *adminClient) WithPlainAuth(username, password string) Client {
+	c.amqpAuth = &amqp091.PlainAuth{
+		Username: username,
+		Password: password,
+	}
+	return c
+}
+
+func (c *adminClient) WithConnection(conn *amqp091.Connection) Client {
+	c.conn = conn
+
+	return nil
 }
 
 type CreateQueueInput struct {

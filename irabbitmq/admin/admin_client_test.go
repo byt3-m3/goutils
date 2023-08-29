@@ -8,11 +8,10 @@ import (
 
 func TestNewAdminClient(t *testing.T) {
 
-	ac := NewAdminClient(
-		WithVhost("/"),
-		WithAMQPUrl("amqp://192.168.1.61"),
-		WithPlainAuth("cbaxter", "pimpin12"),
-	)
+	ac := New().
+		WithVHost("/").
+		WithAMQPUrl("amqp://192.168.1.61").
+		WithPlainAuth("cbaxter", "pimpin12")
 
 	q, err := ac.CreateQueue(context.Background(), &CreateQueueInput{
 		QueName:       "test-queue",
