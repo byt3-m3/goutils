@@ -1,4 +1,4 @@
-package admin
+package admin_client
 
 type AMQPExchangeType string
 

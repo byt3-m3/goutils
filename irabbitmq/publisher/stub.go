@@ -2,7 +2,6 @@ package publisher
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/irabbitmq/admin"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -66,10 +65,6 @@ type GetConnectionStubReturn struct {
 
 func (s *StubRabbitMQPublisher) GetConnection() *amqp091.Connection {
 	return s.GetConnectionStubReturn()
-}
-
-type GetAdminClientStubReturn struct {
-	Client admin.Client
 }
 
 type ResetConnectionStubReturn struct {

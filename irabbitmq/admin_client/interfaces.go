@@ -1,4 +1,4 @@
-package admin
+package admin_client
 
 import (
 	"context"
@@ -30,20 +30,20 @@ type ConnectionGetter interface {
 }
 
 type ClientOptionSetter interface {
-	WithAMQPUrl(url string) Client
+	WithAMQPUrl(url string) RabbitMQAdminClient
 
-	WithVHost(vhost string) Client
+	WithVHost(vhost string) RabbitMQAdminClient
 
-	WithPlainAuth(username, password string) Client
+	WithPlainAuth(username, password string) RabbitMQAdminClient
 
-	WithConnection(conn *amqp091.Connection) Client
+	WithConnection(conn *amqp091.Connection) RabbitMQAdminClient
 }
 
 type ClientValidator interface {
 	ValidateClient(client *adminClient) bool
 }
 
-type Client interface {
+type RabbitMQAdminClient interface {
 	QueueCreator
 
 	ExchangeCreator

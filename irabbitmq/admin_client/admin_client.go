@@ -1,4 +1,4 @@
-package admin
+package admin_client
 
 import (
 	"context"
@@ -13,7 +13,7 @@ type adminClient struct {
 	vHost    string
 }
 
-func New() Client {
+func New() RabbitMQAdminClient {
 	c := &adminClient{}
 
 	return c
@@ -51,17 +51,17 @@ func (c *adminClient) ValidateClient(client *adminClient) bool {
 	return true
 }
 
-func (c *adminClient) WithAMQPUrl(url string) Client {
+func (c *adminClient) WithAMQPUrl(url string) RabbitMQAdminClient {
 	c.amqpUrl = url
 
 	return c
 }
 
-func (c *adminClient) WithVHost(vhost string) Client {
+func (c *adminClient) WithVHost(vhost string) RabbitMQAdminClient {
 	c.vHost = vhost
 	return c
 }
-func (c *adminClient) WithPlainAuth(username, password string) Client {
+func (c *adminClient) WithPlainAuth(username, password string) RabbitMQAdminClient {
 	c.amqpAuth = &amqp091.PlainAuth{
 		Username: username,
 		Password: password,
@@ -69,7 +69,7 @@ func (c *adminClient) WithPlainAuth(username, password string) Client {
 	return c
 }
 
-func (c *adminClient) WithConnection(conn *amqp091.Connection) Client {
+func (c *adminClient) WithConnection(conn *amqp091.Connection) RabbitMQAdminClient {
 	c.conn = conn
 
 	return nil

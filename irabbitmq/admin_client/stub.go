@@ -1,4 +1,4 @@
-package admin
+package admin_client
 
 import (
 	"context"
@@ -19,7 +19,7 @@ type StubClient struct {
 	ValidateClientStubReturn func(client *adminClient) bool
 }
 
-func (s *StubClient) WithAMQPUrl(url string) Client {
+func (s *StubClient) WithAMQPUrl(url string) RabbitMQAdminClient {
 	s.WithAMQPUrlStubReturn(url)
 	return s
 }
@@ -27,17 +27,17 @@ func (s *StubClient) WithAMQPUrl(url string) Client {
 type WithVHostStubReturn struct {
 }
 
-func (s *StubClient) WithVHost(vhost string) Client {
+func (s *StubClient) WithVHost(vhost string) RabbitMQAdminClient {
 	s.WithVHostStubReturn(vhost)
 	return s
 }
 
-func (s *StubClient) WithPlainAuth(username, password string) Client {
+func (s *StubClient) WithPlainAuth(username, password string) RabbitMQAdminClient {
 	s.WithPlainAuthStubReturn(username, password)
 	return s
 }
 
-func (s *StubClient) WithConnection(conn *amqp091.Connection) Client {
+func (s *StubClient) WithConnection(conn *amqp091.Connection) RabbitMQAdminClient {
 	s.WithConnectionStubReturn(conn)
 	return s
 }
