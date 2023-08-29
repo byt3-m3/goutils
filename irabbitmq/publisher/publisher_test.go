@@ -10,11 +10,10 @@ import (
 )
 
 func TestNewPublisher(t *testing.T) {
-	pub := NewPublisher(
-		WithAMQPUrl(env_utils.GetEnvStrict("AMQP_URL")),
-		WithPlainAuth(env_utils.GetEnvStrict("AMQP_USERNAME"), env_utils.GetEnvStrict("AMQP_PASSWORD")),
-		WithVHost("/"),
-	)
+	pub := New().
+		WithAMQPUrl(env_utils.GetEnvStrict("AMQP_URL")).
+		WithPlainAuth(env_utils.GetEnvStrict("AMQP_USERNAME"), env_utils.GetEnvStrict("AMQP_PASSWORD")).
+		WithVHost("/")
 
 	err := pub.Publish(context.Background(), &PublishInput{
 		MessageID:     primitive.NewObjectID().Hex(),

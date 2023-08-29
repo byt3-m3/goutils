@@ -6,66 +6,66 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type StubConsumer struct {
+type StubRabbitMQConsumer struct {
 	ConsumeReturn               func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
 	GetConnectionReturn         func() *amqp091.Connection
 	IsClosedReturn              func() bool
 	GetActiveChannelStubReturn  func() *amqp091.Channel
-	WithAMQPUrlStubReturn       func(url string) RabbitMQConsumer
-	WithConsumerIDStubReturn    func(id string) RabbitMQConsumer
-	WithVHostStubReturn         func(vhost string) RabbitMQConsumer
-	WithPlainAuthStubReturn     func(username, password string) RabbitMQConsumer
-	WithPreFetchCountStubReturn func(count int) RabbitMQConsumer
-	WithLoggerStubReturn        func(logger *log.Logger) RabbitMQConsumer
+	WithAMQPUrlStubReturn       func(url string)
+	WithConsumerIDStubReturn    func(id string)
+	WithVHostStubReturn         func(vhost string)
+	WithPlainAuthStubReturn     func(username, password string)
+	WithPreFetchCountStubReturn func(count int)
+	WithLoggerStubReturn        func(logger *log.Logger)
 	ResetConnectionStubReturn   func()
 }
 
-func (s *StubConsumer) WithAMQPUrl(url string) RabbitMQConsumer {
+func (s *StubRabbitMQConsumer) WithAMQPUrl(url string) RabbitMQConsumer {
 	s.WithAMQPUrlStubReturn(url)
 	return s
 }
 
-func (s *StubConsumer) WithConsumerID(id string) RabbitMQConsumer {
+func (s *StubRabbitMQConsumer) WithConsumerID(id string) RabbitMQConsumer {
 	s.WithConsumerIDStubReturn(id)
 	return s
 }
 
-func (s *StubConsumer) WithVHost(vhost string) RabbitMQConsumer {
+func (s *StubRabbitMQConsumer) WithVHost(vhost string) RabbitMQConsumer {
 	s.WithVHostStubReturn(vhost)
 	return s
 }
 
-func (s *StubConsumer) WithPlainAuth(username, password string) RabbitMQConsumer {
+func (s *StubRabbitMQConsumer) WithPlainAuth(username, password string) RabbitMQConsumer {
 	s.WithPlainAuthStubReturn(username, password)
 	return s
 }
 
-func (s *StubConsumer) WithPreFetchCount(count int) RabbitMQConsumer {
+func (s *StubRabbitMQConsumer) WithPreFetchCount(count int) RabbitMQConsumer {
 	s.WithPreFetchCountStubReturn(count)
 	return s
 }
 
-func (s *StubConsumer) WithLogger(logger *log.Logger) RabbitMQConsumer {
+func (s *StubRabbitMQConsumer) WithLogger(logger *log.Logger) RabbitMQConsumer {
 	s.WithLoggerStubReturn(logger)
 	return s
 }
 
-func (s *StubConsumer) ResetConnection() {
+func (s *StubRabbitMQConsumer) ResetConnection() {
 	s.ResetConnectionStubReturn()
 }
 
-func (s *StubConsumer) GetActiveChannel() *amqp091.Channel {
+func (s *StubRabbitMQConsumer) GetActiveChannel() *amqp091.Channel {
 	return s.GetActiveChannelStubReturn()
 }
 
-func (s *StubConsumer) Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error) {
+func (s *StubRabbitMQConsumer) Consume(ctx context.Context, queue string) (<-chan amqp091.Delivery, error) {
 	return s.ConsumeReturn(ctx, queue)
 }
 
-func (s *StubConsumer) GetConnection() *amqp091.Connection {
+func (s *StubRabbitMQConsumer) GetConnection() *amqp091.Connection {
 	return s.GetConnectionReturn()
 }
 
-func (s *StubConsumer) IsClosed() bool {
+func (s *StubRabbitMQConsumer) IsClosed() bool {
 	return s.IsClosedReturn()
 }

@@ -3,53 +3,10 @@ package publisher
 import (
 	"context"
 	"github.com/rabbitmq/amqp091-go"
-	"log"
+	log "github.com/sirupsen/logrus"
+
 	"time"
 )
-
-type publisherOpt func(pub *publisher)
-
-var (
-	WithAMQPUrl = func(url string) publisherOpt {
-		return func(pub *publisher) {
-			pub.amqpUrl = url
-		}
-	}
-
-	WithVHost = func(vhost string) publisherOpt {
-		return func(pub *publisher) {
-			pub.vHost = vhost
-		}
-	}
-
-	WithPlainAuth = func(username, password string) publisherOpt {
-		return func(pub *publisher) {
-			pub.amqpAuth = &amqp091.PlainAuth{
-				Username: username,
-				Password: password,
-			}
-		}
-	}
-
-	WithLogger = func(logger *log.Logger) publisherOpt {
-		return func(pub *publisher) {
-			pub.logger = logger
-		}
-	}
-
-	WithNoAuth = func() publisherOpt {
-		return func(pub *publisher) {
-			pub.amqpAuth = nil
-		}
-	}
-)
-
-type Publisher interface {
-	Publish(ctx context.Context, input *PublishInput) error
-	GetConnection() *amqp091.Connection
-	ResetConnection() error
-	IsClosed() bool
-}
 
 type publisher struct {
 	amqpUrl  string
@@ -59,39 +16,53 @@ type publisher struct {
 	amqpAuth amqp091.Authentication
 }
 
-func NewPublisher(opts ...publisherOpt) Publisher {
+func New() RabbitMQPublisher {
 	p := &publisher{}
-
-	for _, opt := range opts {
-		opt(p)
-	}
-
-	if p.logger == nil {
-		p.logger = log.Default()
-	}
-
-	if !validatePublisher(p) {
-		p.logger.Fatalln("failed publisher validation")
-	}
-
-	if p.conn == nil {
-
-		if err := p.ResetConnection(); err != nil {
-			p.logger.Fatalln(err)
-		}
-	}
 
 	return p
 }
 
-func validatePublisher(p *publisher) bool {
-	if p.amqpUrl == "" {
-		log.Println("amqpUrl not set, use WithAMQPUrl")
+func (p *publisher) MustValidate() {
+	switch {
+	case p.amqpUrl == "":
+		panic("amqpURL not set")
 
-		return false
+	case p.conn == nil:
+		if err := p.ResetConnection(); err != nil {
+			p.logger.Fatalln(err)
+		}
+
+	case p.logger == nil:
+		p.logger = log.New()
 	}
+}
 
-	return true
+func (p *publisher) WithAMQPUrl(url string) RabbitMQPublisher {
+	p.amqpUrl = url
+	return p
+}
+
+func (p *publisher) WithVHost(vhost string) RabbitMQPublisher {
+	p.vHost = vhost
+	return p
+}
+
+func (p *publisher) WithLogger(log *log.Logger) RabbitMQPublisher {
+	p.logger = log
+	return p
+}
+
+func (p *publisher) WithNoAuth() RabbitMQPublisher {
+	p.amqpAuth = nil
+	return p
+}
+
+func (p *publisher) WithPlainAuth(username, password string) RabbitMQPublisher {
+	p.amqpAuth = &amqp091.PlainAuth{
+		Username: username,
+		Password: password,
+	}
+	return p
 }
 
 type PublishInput struct {
