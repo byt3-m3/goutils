@@ -3,6 +3,7 @@ package admin_client
 import (
 	"context"
 	"github.com/rabbitmq/amqp091-go"
+	log "github.com/sirupsen/logrus"
 )
 
 type StubClient struct {
@@ -17,6 +18,12 @@ type StubClient struct {
 	WithPlainAuthStubReturn  func(username, password string)
 	WithConnectionStubReturn func(conn *amqp091.Connection)
 	ValidateClientStubReturn func(client *adminClient) bool
+	WithLoggerStubReturn     func(logger *log.Logger)
+}
+
+func (s *StubClient) WithLogger(logger *log.Logger) RabbitMQAdminClient {
+	s.WithLoggerStubReturn(logger)
+	return s
 }
 
 type NewStubClientInput struct {
@@ -31,6 +38,7 @@ type NewStubClientInput struct {
 	WithPlainAuthStubReturn  func(username, password string)
 	WithConnectionStubReturn func(conn *amqp091.Connection)
 	ValidateClientStubReturn func(client *adminClient) bool
+	WithLoggerStubReturn     func(logger *log.Logger)
 }
 
 func NewStubClient(input *NewStubClientInput) RabbitMQAdminClient {
@@ -46,6 +54,7 @@ func NewStubClient(input *NewStubClientInput) RabbitMQAdminClient {
 		WithPlainAuthStubReturn:  input.WithPlainAuthStubReturn,
 		WithConnectionStubReturn: input.WithConnectionStubReturn,
 		ValidateClientStubReturn: input.ValidateClientStubReturn,
+		WithLoggerStubReturn:     input.WithLoggerStubReturn,
 	}
 }
 

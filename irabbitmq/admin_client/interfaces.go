@@ -3,6 +3,7 @@ package admin_client
 import (
 	"context"
 	"github.com/rabbitmq/amqp091-go"
+	log "github.com/sirupsen/logrus"
 )
 
 type QueueCreator interface {
@@ -37,6 +38,8 @@ type ClientOptionSetter interface {
 	WithPlainAuth(username, password string) RabbitMQAdminClient
 
 	WithConnection(conn *amqp091.Connection) RabbitMQAdminClient
+
+	WithLogger(logger *log.Logger) RabbitMQAdminClient
 }
 
 type ClientValidator interface {
