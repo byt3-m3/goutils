@@ -2,18 +2,55 @@ package admin_client
 
 import (
 	"context"
+	"github.com/rabbitmq/amqp091-go"
 	"log"
 	"testing"
 )
 
+var (
+	stubAdminClient = NewStubClient(
+		&NewStubClientInput{
+			CreateQueueStubReturn: func(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error) {
+				return &amqp091.Queue{}, nil
+			},
+			CreateExchangeStubReturn: func(ctx context.Context, input *CreateExchangeInput) error {
+				return nil
+			},
+			BindQueueStubReturn: func(ctx context.Context, input *BindQueueInput) error {
+				return nil
+			},
+			DeleteQueueStubReturn: func(ctx context.Context, input *DeleteQueueInput) error {
+				return nil
+			},
+			DeleteExchangeStubReturn: func(ctx context.Context, input *DeleteExchangeInput) error {
+				return nil
+			},
+			GetConnectionStubReturn: func() *amqp091.Connection {
+
+				return &amqp091.Connection{}
+			},
+			WithAMQPUrlStubReturn: func(url string) {
+
+			},
+			WithVHostStubReturn: func(vhost string) {
+
+			},
+			WithPlainAuthStubReturn: func(username, password string) {
+
+			},
+			WithConnectionStubReturn: func(conn *amqp091.Connection) {
+
+			},
+			ValidateClientStubReturn: func(client *adminClient) bool {
+				return true
+			},
+		},
+	)
+)
+
 func TestNewAdminClient(t *testing.T) {
 
-	ac := New().
-		WithVHost("/").
-		WithAMQPUrl("amqp://192.168.1.61").
-		WithPlainAuth("cbaxter", "pimpin12")
-
-	q, err := ac.CreateQueue(context.Background(), &CreateQueueInput{
+	q, err := stubAdminClient.CreateQueue(context.Background(), &CreateQueueInput{
 		QueName:       "test-queue",
 		IsDurable:     false,
 		IsExclusive:   false,
@@ -23,7 +60,7 @@ func TestNewAdminClient(t *testing.T) {
 
 	log.Print(q, err)
 
-	err = ac.CreateExchange(context.Background(), &CreateExchangeInput{
+	err = stubAdminClient.CreateExchange(context.Background(), &CreateExchangeInput{
 		ExchangeName:  "test-exchange",
 		ExchangeType:  AMQPExchangeTypeDirect,
 		IsDurable:     false,
@@ -34,7 +71,7 @@ func TestNewAdminClient(t *testing.T) {
 
 	log.Print(err)
 
-	err = ac.BindQueue(nil, &BindQueueInput{
+	err = stubAdminClient.BindQueue(nil, &BindQueueInput{
 		QueName:   "test-queue",
 		Key:       "",
 		Exchange:  "test-exchange",

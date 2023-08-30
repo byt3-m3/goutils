@@ -19,6 +19,36 @@ type StubClient struct {
 	ValidateClientStubReturn func(client *adminClient) bool
 }
 
+type NewStubClientInput struct {
+	CreateQueueStubReturn    func(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error)
+	CreateExchangeStubReturn func(ctx context.Context, input *CreateExchangeInput) error
+	BindQueueStubReturn      func(ctx context.Context, input *BindQueueInput) error
+	DeleteQueueStubReturn    func(ctx context.Context, input *DeleteQueueInput) error
+	DeleteExchangeStubReturn func(ctx context.Context, input *DeleteExchangeInput) error
+	GetConnectionStubReturn  func() *amqp091.Connection
+	WithAMQPUrlStubReturn    func(url string)
+	WithVHostStubReturn      func(vhost string)
+	WithPlainAuthStubReturn  func(username, password string)
+	WithConnectionStubReturn func(conn *amqp091.Connection)
+	ValidateClientStubReturn func(client *adminClient) bool
+}
+
+func NewStubClient(input *NewStubClientInput) RabbitMQAdminClient {
+	return &StubClient{
+		CreateQueueStubReturn:    input.CreateQueueStubReturn,
+		CreateExchangeStubReturn: input.CreateExchangeStubReturn,
+		BindQueueStubReturn:      input.BindQueueStubReturn,
+		DeleteQueueStubReturn:    input.DeleteQueueStubReturn,
+		DeleteExchangeStubReturn: input.DeleteExchangeStubReturn,
+		GetConnectionStubReturn:  input.GetConnectionStubReturn,
+		WithAMQPUrlStubReturn:    input.WithAMQPUrlStubReturn,
+		WithVHostStubReturn:      input.WithVHostStubReturn,
+		WithPlainAuthStubReturn:  input.WithPlainAuthStubReturn,
+		WithConnectionStubReturn: input.WithConnectionStubReturn,
+		ValidateClientStubReturn: input.ValidateClientStubReturn,
+	}
+}
+
 func (s *StubClient) WithAMQPUrl(url string) RabbitMQAdminClient {
 	s.WithAMQPUrlStubReturn(url)
 	return s
