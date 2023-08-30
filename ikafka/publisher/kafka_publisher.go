@@ -6,67 +6,67 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
-	"log"
+	log "github.com/sirupsen/logrus"
+
 	"time"
 )
 
 type kafkaPublisher struct {
-	topic      string
-	brokerAddr string
-	conn       *kafka.Conn
+	topic         string
+	brokerAddr    string
+	conn          *kafka.Conn
+	partition     int
+	authMechanism sasl.Mechanism
+	logger        *log.Logger
 }
 
-type (
-	opts struct {
-		topic         string
-		brokerAddr    string
-		partition     int
-		conn          *kafka.Conn
-		authMechanism sasl.Mechanism
-	}
+func NewPublisher() Publisher {
+	return &kafkaPublisher{}
+}
 
-	opt func(opt *opts)
-)
+func (p *kafkaPublisher) WithLogger(logger *log.Logger) Publisher {
+	p.logger = logger
+	return p
+}
 
-var (
-	WithTopic = func(topic string) opt {
-		return func(opt *opts) {
-			opt.topic = topic
-		}
-	}
+func (p *kafkaPublisher) WithAuth(authMechanism sasl.Mechanism) Publisher {
+	p.authMechanism = authMechanism
+	return p
+}
 
-	WithBroker = func(address string) opt {
-		return func(opt *opts) {
-			opt.brokerAddr = address
-		}
-	}
+func (p *kafkaPublisher) WithTopic(topic string) Publisher {
+	p.topic = topic
+	return p
 
-	WithKafkaConn = func(conn *kafka.Conn) opt {
-		return func(opt *opts) {
-			opt.conn = conn
-		}
-	}
+}
 
-	WithPlainAuth = func(authMechanism plain.Mechanism) opt {
-		return func(opt *opts) {
-			opt.authMechanism = authMechanism
-		}
-	}
-)
+func (p *kafkaPublisher) WithBroker(broker string) Publisher {
+	p.brokerAddr = broker
+	return p
+}
 
-func NewPublisher(inputOpts ...opt) (Publisher, error) {
-	pOpts := &opts{}
+func (p *kafkaPublisher) WithKafkaConn(conn *kafka.Conn) Publisher {
+	p.conn = conn
+	return p
+}
 
-	for _, opt := range inputOpts {
-		opt(pOpts)
-	}
+func (p *kafkaPublisher) MustValidate() {
+	switch {
+	case p.brokerAddr == "":
+		panic("broker address not set, use WithBroker")
 
-	if pOpts.conn == nil {
-		if pOpts.authMechanism == nil {
-			pOpts.authMechanism = plain.Mechanism{
+	case p.topic == "":
+		panic("topic not set, user WithTopic")
+
+	case p.conn == nil:
+
+		switch p.authMechanism.(type) {
+		case nil:
+			p.authMechanism = plain.Mechanism{
 				Username: env_utils.GetEnvStrict("KAFKA_USERNAME"),
 				Password: env_utils.GetEnvStrict("KAFKA_PASSWORD"),
 			}
+
 		}
 
 		dialer := kafka.Dialer{
@@ -80,33 +80,22 @@ func NewPublisher(inputOpts ...opt) (Publisher, error) {
 			KeepAlive:       0,
 			Resolver:        nil,
 			TLS:             nil,
-			SASLMechanism:   pOpts.authMechanism,
+			SASLMechanism:   p.authMechanism,
 			TransactionalID: "",
 		}
-		conn, err := dialer.DialLeader(context.Background(), "tcp", pOpts.brokerAddr, pOpts.topic, pOpts.partition)
+		conn, err := dialer.DialLeader(context.Background(), "tcp", p.brokerAddr, p.topic, p.partition)
 		if err != nil {
-			log.Println(err)
-			return nil, err
+			panic(err)
 		}
 
-		return &kafkaPublisher{
-			topic:      pOpts.topic,
-			brokerAddr: pOpts.brokerAddr,
-			conn:       conn,
-		}, nil
+		p.conn = conn
 	}
-
-	return &kafkaPublisher{
-		topic:      pOpts.topic,
-		brokerAddr: pOpts.brokerAddr,
-		conn:       pOpts.conn,
-	}, nil
 }
 
 func (p *kafkaPublisher) PublishMessage(ctx context.Context, msg *kafka.Message) (int, error) {
 	written, err := p.conn.WriteMessages(*msg)
 	if err != nil {
-		log.Println("error writing message")
+		p.logger.Error(err)
 		return 0, err
 	}
 	return written, nil
