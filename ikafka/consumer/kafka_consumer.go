@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"github.com/byt3-m3/goutils/env_utils"
+	"github.com/byt3-m3/goutils/logging"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
@@ -66,6 +67,9 @@ func MustValidate(consumer *kafkaConsumer) bool {
 	case consumer.consumerID == "":
 		panic("no ConsumerID set, use WithConsumerID")
 
+	case consumer.logger == nil:
+		consumer.logger = logging.NewLogger()
+
 	case consumer.authMechanism == nil:
 		consumer.authMechanism = plain.Mechanism{
 			Username: env_utils.GetEnvStrict("KAFKA_USERNAME"),
@@ -109,12 +113,11 @@ func (c *kafkaConsumer) ConsumeAsync(ctx context.Context, input *ConsumeAsyncInp
 	MustValidate(c)
 
 	ticker := time.NewTicker(input.TickerRate)
-
+	c.logger.Info("starting async consumer")
 	for {
 		select {
 		case <-ticker.C:
 
-			log.Println("executing read")
 			msg, err := c.reader.ReadMessage(ctx)
 
 			if err != nil {
@@ -132,7 +135,8 @@ func (c *kafkaConsumer) Consume(ctx context.Context) (*kafka.Message, error) {
 	MustValidate(c)
 	msg, err := c.reader.ReadMessage(ctx)
 	if err != nil {
-		log.Fatalln("error reading message", err)
+		c.logger.Error("error reading message")
+		return nil, err
 	}
 	return &msg, nil
 }
