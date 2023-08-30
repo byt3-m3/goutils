@@ -6,7 +6,8 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
-	"log"
+	log "github.com/sirupsen/logrus"
+
 	"time"
 )
 
@@ -16,10 +17,16 @@ type kafkaConsumer struct {
 	brokers       []string
 	consumerID    string
 	authMechanism sasl.Mechanism
+	logger        *log.Logger
 }
 
 func New() Consumer {
 	return &kafkaConsumer{}
+}
+
+func (c *kafkaConsumer) WithLogger(logger *log.Logger) Consumer {
+	c.logger = logger
+	return c
 }
 
 func (c *kafkaConsumer) WithReader(reader *kafka.Reader) Consumer {
@@ -92,10 +99,16 @@ func MustValidate(consumer *kafkaConsumer) bool {
 
 }
 
-func (c *kafkaConsumer) ConsumeAsync(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
+type ConsumeAsyncInput struct {
+	MsgChan    chan *kafka.Message
+	ErrorChan  chan error
+	TickerRate time.Duration
+}
+
+func (c *kafkaConsumer) ConsumeAsync(ctx context.Context, input *ConsumeAsyncInput) error {
 	MustValidate(c)
 
-	ticker := time.NewTicker(tickerRate)
+	ticker := time.NewTicker(input.TickerRate)
 
 	for {
 		select {
@@ -105,10 +118,11 @@ func (c *kafkaConsumer) ConsumeAsync(ctx context.Context, msgBus chan *kafka.Mes
 			msg, err := c.reader.ReadMessage(ctx)
 
 			if err != nil {
-				log.Fatalln("error reading message", err)
+				c.logger.Error("error reading message", err)
+				input.ErrorChan <- err
 			}
 
-			msgBus <- &msg
+			input.MsgChan <- &msg
 		}
 
 	}

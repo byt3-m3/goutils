@@ -9,12 +9,11 @@ import (
 	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
-	"time"
 )
 
 var (
 	consumerStub = NewStub(NewStubInput{
-		ConsumeAsyncStubReturn: func(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
+		ConsumeAsyncStubReturn: func(ctx context.Context, input *ConsumeAsyncInput) error {
 			return nil
 		},
 		ConsumeStubReturn: func(ctx context.Context) (*kafka.Message, error) {
@@ -38,9 +37,7 @@ var (
 	})
 
 	consumerStubPanic = NewStub(NewStubInput{
-		ConsumeAsyncStubReturn: func(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
-			panic("oh no panic")
-
+		ConsumeAsyncStubReturn: func(ctx context.Context, input *ConsumeAsyncInput) error {
 			return nil
 		},
 		ConsumeStubReturn: func(ctx context.Context) (*kafka.Message, error) {
@@ -106,8 +103,13 @@ func TestKafkaConsumer_ConsumeAsync(t *testing.T) {
 
 	t.Run("test when consumeAsync is success", func(t *testing.T) {
 		msgBus := make(chan *kafka.Message)
+		errChan := make(chan error)
 
-		err := consumerStub.ConsumeAsync(context.Background(), msgBus, time.Second)
+		err := consumerStub.ConsumeAsync(context.Background(), &ConsumeAsyncInput{
+			MsgChan:    msgBus,
+			ErrorChan:  errChan,
+			TickerRate: 0,
+		})
 
 		assert.NoError(t, err)
 
@@ -121,8 +123,13 @@ func TestKafkaConsumer_ConsumeAsync(t *testing.T) {
 		}()
 
 		msgBus := make(chan *kafka.Message)
+		errChan := make(chan error)
 
-		err := consumerStub.ConsumeAsync(context.Background(), msgBus, time.Second)
+		err := consumerStub.ConsumeAsync(context.Background(), &ConsumeAsyncInput{
+			MsgChan:    msgBus,
+			ErrorChan:  errChan,
+			TickerRate: 0,
+		})
 
 		assert.NoError(t, err)
 

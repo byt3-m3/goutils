@@ -4,17 +4,23 @@ import (
 	"context"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
-	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 type StubKafkaConsumer struct {
-	ConsumeAsyncStubReturn   func(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error
+	ConsumeAsyncStubReturn   func(ctx context.Context, input *ConsumeAsyncInput) error
 	ConsumeStubReturn        func(ctx context.Context) (*kafka.Message, error)
 	WithReaderStubReturn     func(reader *kafka.Reader)
 	WithTopicStubReturn      func(topic string)
 	WithBrokersStubReturn    func(brokers []string)
 	WithConsumerIDStubReturn func(consumerID string)
 	WithAuthStubReturn       func(authMechanism sasl.Mechanism)
+	WithLoggerStubReturn     func(logger *log.Logger)
+}
+
+func (s *StubKafkaConsumer) WithLogger(logger *log.Logger) Consumer {
+	s.WithLoggerStubReturn(logger)
+	return s
 }
 
 func (s *StubKafkaConsumer) WithReader(reader *kafka.Reader) Consumer {
@@ -43,7 +49,7 @@ func (s *StubKafkaConsumer) WithAuth(authMechanism sasl.Mechanism) Consumer {
 }
 
 type NewStubInput struct {
-	ConsumeAsyncStubReturn   func(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error
+	ConsumeAsyncStubReturn   func(ctx context.Context, input *ConsumeAsyncInput) error
 	ConsumeStubReturn        func(ctx context.Context) (*kafka.Message, error)
 	WithReaderStubReturn     func(reader *kafka.Reader)
 	WithTopicStubReturn      func(topic string)
@@ -69,8 +75,8 @@ type ConsumeAsyncStubReturn struct {
 	Error error
 }
 
-func (s *StubKafkaConsumer) ConsumeAsync(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
-	return s.ConsumeAsyncStubReturn(ctx, msgBus, tickerRate)
+func (s *StubKafkaConsumer) ConsumeAsync(ctx context.Context, input *ConsumeAsyncInput) error {
+	return s.ConsumeAsyncStubReturn(ctx, input)
 }
 
 type ConsumeStubReturn struct {

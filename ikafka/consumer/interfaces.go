@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
-	"time"
+	log "github.com/sirupsen/logrus"
 )
 
 type OptionsSetter interface {
@@ -13,10 +13,12 @@ type OptionsSetter interface {
 	WithBrokers(brokers []string) Consumer
 	WithConsumerID(id string) Consumer
 	WithAuth(authMechanism sasl.Mechanism) Consumer
+
+	WithLogger(logger *log.Logger) Consumer
 }
 
 type Consumer interface {
 	OptionsSetter
-	ConsumeAsync(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error
+	ConsumeAsync(ctx context.Context, input *ConsumeAsyncInput) error
 	Consume(ctx context.Context) (*kafka.Message, error)
 }
