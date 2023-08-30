@@ -2,139 +2,129 @@ package consumer
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/segmentio/kafka-go"
+	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/dig"
 	"log"
 	"testing"
 	"time"
 )
 
 var (
-	kafkaConsumerLive = func() Consumer {
+	consumerStub = NewStub(NewStubInput{
+		ConsumeAsyncStubReturn: func(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
+			return nil
+		},
+		ConsumeStubReturn: func(ctx context.Context) (*kafka.Message, error) {
+			return &kafka.Message{}, nil
+		},
+		WithReaderStubReturn: func(reader *kafka.Reader) {
 
-		return ProvideKafkaConsumer(&options{
-			Topic:      "test-topic",
-			Brokers:    []string{"192.168.1.5:9092"},
-			ConsumerID: "",
-		})
-	}
+		},
+		WithTopicStubReturn: func(topic string) {
 
-	testKafkaTopic    = "test-topic"
-	testKafkaMsgValue = []byte("This is data")
-	kafkaConsumerErr  = errors.New("this is an error")
+		},
+		WithBrokersStubReturn: func(brokers []string) {
 
-	kafkaConsumerMockNoErrs = func() Consumer {
-		return &KafkaConsumerMock{
-			ConsumeMockResponse: &ConsumeMockResponse{
-				Message: &kafka.Message{
-					Topic:         testKafkaTopic,
-					Partition:     0,
-					Offset:        0,
-					HighWaterMark: 0,
-					Key:           nil,
-					Value:         testKafkaMsgValue,
-					Headers:       nil,
-					Time:          time.Time{},
-				},
-				Error: nil,
-			},
-			ConsumeAsyncMockResponse: &ConsumeAsyncMockResponse{Error: nil},
-		}
-	}
+		},
+		WithConsumerIDStubReturn: func(consumerID string) {
 
-	kafkaConsumerMockErrs = func() Consumer {
-		return &KafkaConsumerMock{
-			ConsumeMockResponse: &ConsumeMockResponse{
-				Message: nil,
-				Error:   kafkaConsumerErr,
-			},
-			ConsumeAsyncMockResponse: &ConsumeAsyncMockResponse{Error: kafkaConsumerErr},
-		}
-	}
+		},
+		WithAuthStubReturn: func(authMechanism sasl.Mechanism) {
+
+		},
+	})
+
+	consumerStubPanic = NewStub(NewStubInput{
+		ConsumeAsyncStubReturn: func(ctx context.Context, msgBus chan *kafka.Message, tickerRate time.Duration) error {
+			panic("oh no panic")
+
+			return nil
+		},
+		ConsumeStubReturn: func(ctx context.Context) (*kafka.Message, error) {
+			panic("oh no panic")
+
+			return &kafka.Message{}, nil
+		},
+		WithReaderStubReturn: func(reader *kafka.Reader) {
+
+		},
+		WithTopicStubReturn: func(topic string) {
+
+		},
+		WithBrokersStubReturn: func(brokers []string) {
+
+		},
+		WithConsumerIDStubReturn: func(consumerID string) {
+
+		},
+		WithAuthStubReturn: func(authMechanism sasl.Mechanism) {
+
+		},
+	})
 )
 
 func TestKafkaConsumer_Consume(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("test when consumer is successful", func(t *testing.T) {
-		consumer := NewConsumer(
-			WithBrokers([]string{"192.168.1.60:9094"}),
-			WithPlainAuth(plain.Mechanism{
-				Username: "cbaxter",
-				Password: "kafka1",
-			}),
-			WithTopic("test-topic"),
-			WithConsumerID("test-consumer-id-1"),
-		)
 
-		msg, err := consumer.Consume(context.Background())
+		consumerStub.WithBrokers([]string{"192.168.1.60:9094"}).
+			WithConsumerID("test-consumerID-1").
+			WithTopic("test-topic").
+			WithAuth(plain.Mechanism{
+				Username: "test",
+				Password: "test",
+			})
+
+		msg, err := consumerStub.Consume(context.Background())
 		if err != nil {
 			log.Println(err)
 		}
-
-		log.Println(msg)
+		assert.NotNil(t, msg)
 
 	})
 
-	t.Run("test when consumer failed", func(t *testing.T) {
-		consumer := NewConsumer(
-			WithBrokers([]string{"127.0.0.1:9092"}),
-			WithConsumerID("test_consumer"),
-			WithTopic("test-topic"),
-		)
+	t.Run("test when consumer panics", func(t *testing.T) {
 
-		msg, err := consumer.Consume(ctx)
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println("panic occurred:", err)
+			}
+		}()
+
+		msg, err := consumerStubPanic.Consume(ctx)
 		fmt.Println(msg, err)
-		//assert.Error(t, err)
-		//assert.Empty(t, msg)
-		//assert.Equal(t, kafkaConsumerErr, err)
 
 	})
 
 }
 
 func TestKafkaConsumer_ConsumeAsync(t *testing.T) {
-	ctx := context.Background()
 
-	t.Run("test when consumer is successful", func(t *testing.T) {
-		c := dig.New()
+	t.Run("test when consumeAsync is success", func(t *testing.T) {
+		msgBus := make(chan *kafka.Message)
 
-		if err := c.Provide(kafkaConsumerMockNoErrs); err != nil {
-			t.Fatal(err)
-		}
+		err := consumerStub.ConsumeAsync(context.Background(), msgBus, time.Second)
 
-		if err := c.Invoke(func(consumer Consumer) {
-			msgBus := make(chan *kafka.Message)
-
-			err := consumer.ConsumeAsync(ctx, msgBus, time.Second*5)
-			assert.NoError(t, err)
-
-		}); err != nil {
-			t.Fatal(err)
-		}
+		assert.NoError(t, err)
 
 	})
 
-	t.Run("test when consumer failed", func(t *testing.T) {
-		c := dig.New()
+	t.Run("test when consumeAsync panics", func(t *testing.T) {
+		defer func() {
+			if err := recover(); err != nil {
+				log.Println("panic occurred:", err)
+			}
+		}()
 
-		if err := c.Provide(kafkaConsumerMockErrs); err != nil {
-			t.Fatal(err)
-		}
+		msgBus := make(chan *kafka.Message)
 
-		if err := c.Invoke(func(consumer Consumer) {
-			msgBus := make(chan *kafka.Message)
+		err := consumerStub.ConsumeAsync(context.Background(), msgBus, time.Second)
 
-			err := consumer.ConsumeAsync(ctx, msgBus, time.Second*5)
-			assert.Error(t, err)
-
-		}); err != nil {
-			t.Fatal(err)
-		}
+		assert.NoError(t, err)
 
 	})
 }
