@@ -20,6 +20,37 @@ type StubRabbitMQConsumer struct {
 	ResetConnectionStubReturn   func()
 }
 
+type NewStubRabbitMQConsumerInput struct {
+	ConsumeReturn               func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
+	GetConnectionReturn         func() *amqp091.Connection
+	IsClosedReturn              func() bool
+	GetActiveChannelStubReturn  func() *amqp091.Channel
+	WithAMQPUrlStubReturn       func(url string)
+	WithConsumerIDStubReturn    func(id string)
+	WithVHostStubReturn         func(vhost string)
+	WithPlainAuthStubReturn     func(username, password string)
+	WithPreFetchCountStubReturn func(count int)
+	WithLoggerStubReturn        func(logger *log.Logger)
+	ResetConnectionStubReturn   func()
+}
+
+func NewStubRabbitMQConsumer(input *NewStubRabbitMQConsumerInput) RabbitMQConsumer {
+
+	return &StubRabbitMQConsumer{
+		ConsumeReturn:               input.ConsumeReturn,
+		GetConnectionReturn:         input.GetConnectionReturn,
+		IsClosedReturn:              input.IsClosedReturn,
+		GetActiveChannelStubReturn:  input.GetActiveChannelStubReturn,
+		WithAMQPUrlStubReturn:       input.WithAMQPUrlStubReturn,
+		WithConsumerIDStubReturn:    input.WithConsumerIDStubReturn,
+		WithVHostStubReturn:         input.WithVHostStubReturn,
+		WithPlainAuthStubReturn:     input.WithPlainAuthStubReturn,
+		WithPreFetchCountStubReturn: input.WithPreFetchCountStubReturn,
+		WithLoggerStubReturn:        input.WithLoggerStubReturn,
+		ResetConnectionStubReturn:   input.ResetConnectionStubReturn,
+	}
+}
+
 func (s *StubRabbitMQConsumer) WithAMQPUrl(url string) RabbitMQConsumer {
 	s.WithAMQPUrlStubReturn(url)
 	return s

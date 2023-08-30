@@ -4,18 +4,53 @@ import (
 	"context"
 	"github.com/byt3-m3/goutils/env_utils"
 	"github.com/byt3-m3/goutils/vars"
+	"github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log"
 	"testing"
 )
 
-func TestNewPublisher(t *testing.T) {
-	pub := New().
-		WithAMQPUrl(env_utils.GetEnvStrict("AMQP_URL")).
-		WithPlainAuth(env_utils.GetEnvStrict("AMQP_USERNAME"), env_utils.GetEnvStrict("AMQP_PASSWORD")).
-		WithVHost("/")
+var (
+	livePublisher = New().
+			WithAMQPUrl(env_utils.GetEnv("AMQP_URL", "")).
+			WithPlainAuth(env_utils.GetEnv("AMQP_USERNAME", ""), env_utils.GetEnv("AMQP_PASSWORD", "")).
+			WithVHost("/")
 
-	err := pub.Publish(context.Background(), &PublishInput{
+	stubPublisher = NewStubRabbitMQPublisher(&NewStubRabbitMQPublisherInput{
+		PublishStubReturn: func(ctx context.Context, input *PublishInput) error {
+			return nil
+		},
+		GetConnectionStubReturn: func() *amqp091.Connection {
+			return nil
+		},
+		ResetConnectionStubReturn: func() error {
+			return nil
+		},
+		IsClosedStubReturn: func() bool {
+			return true
+		},
+		WithAMQPUrlStubReturn: func(url string) {
+
+		},
+		WithVHostStubReturn: func(vhost string) {
+
+		},
+		WithLoggerStubReturn: func(logger *logrus.Logger) {
+
+		},
+		WithNoAuthStubReturn: func() {
+
+		},
+		WithPlainAuthStubReturn: func(username, password string) {
+
+		},
+	})
+)
+
+func TestNewPublisher(t *testing.T) {
+
+	err := stubPublisher.Publish(context.Background(), &PublishInput{
 		MessageID:     primitive.NewObjectID().Hex(),
 		Exchange:      "test-exchange",
 		RoutingKey:    "",

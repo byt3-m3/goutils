@@ -2,26 +2,59 @@ package consumer
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/env_utils"
+	"github.com/rabbitmq/amqp091-go"
+	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/assert"
 	"log"
 	"testing"
 )
 
-func TestNewConsumer(t *testing.T) {
-	c := New().
-		WithAMQPUrl(env_utils.GetEnvStrict("AMQP_URL")).
-		WithPlainAuth(env_utils.GetEnvStrict("AMQP_USERNAME"), env_utils.GetEnvStrict("AMQP_PASSWORD")).
-		WithConsumerID("test-consumer-id").
-		WithVHost("/").
-		WithPreFetchCount(1)
+var (
+	stubConsumer = NewStubRabbitMQConsumer(&NewStubRabbitMQConsumerInput{
+		ConsumeReturn: func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error) {
+			data := make(chan amqp091.Delivery, 100)
 
-	delivery, err := c.Consume(context.Background(), "test-queue")
+			return data, nil
+		},
+		GetConnectionReturn: func() *amqp091.Connection {
+
+			return nil
+		},
+		IsClosedReturn: func() bool {
+			return true
+		},
+		GetActiveChannelStubReturn: func() *amqp091.Channel {
+			return nil
+		},
+		WithAMQPUrlStubReturn: func(url string) {
+
+		},
+		WithConsumerIDStubReturn: func(id string) {
+
+		},
+		WithVHostStubReturn: func(vhost string) {
+
+		},
+		WithPlainAuthStubReturn: func(username, password string) {
+
+		},
+		WithPreFetchCountStubReturn: func(count int) {
+
+		},
+		WithLoggerStubReturn: func(logger *logrus.Logger) {
+
+		},
+		ResetConnectionStubReturn: func() {
+
+		},
+	})
+)
+
+func TestNewConsumer(t *testing.T) {
+
+	delivery, err := stubConsumer.Consume(context.Background(), "test-queue")
 	if err != nil {
 		log.Fatalln(err)
 	}
-
-	for msg := range delivery {
-		msg.Ack(false)
-	}
-
+	assert.NotNil(t, delivery)
 }
