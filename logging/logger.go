@@ -12,8 +12,8 @@ var logLevelMap = map[string]log.Level{
 	"INFO":  log.InfoLevel,
 }
 
-func NewLogger() log.Logger {
-	return log.Logger{
+func NewLogger() *log.Logger {
+	return &log.Logger{
 		Out:   os.Stdout,
 		Level: logLevelMap[strings.ToUpper(vars.LogLevel)],
 

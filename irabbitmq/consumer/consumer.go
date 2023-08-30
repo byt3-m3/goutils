@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -33,8 +34,10 @@ func (c *consumer) MustValidate() {
 	case c.amqpUrl == "":
 		panic("AMQPUrl not set")
 
-	case c.conn == nil:
+	case c.logger == nil:
+		c.logger = logging.NewLogger()
 
+	case c.conn == nil:
 		c.ResetConnection()
 
 	}
