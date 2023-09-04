@@ -2,80 +2,91 @@ package mongodb
 
 import (
 	"context"
-	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 )
 
-type (
-	SaveDocumentStubResponse struct {
-		Result bool
-		Error  error
-	}
-	CountDocumentsStubResponse struct {
-		Count int64
-		Error error
-	}
-
-	GetDocumentByIdStubResponse struct {
-		Cursor MongoCursor
-		Error  error
-	}
-
-	CloseConnectionStubResponse struct {
-		Error error
-	}
-)
-
-type StubMongoClient struct {
-	CountDocumentsStubResponse   func(ctx context.Context, filter primitive.M) CountDocumentsStubResponse
-	SaveDocumentStubResponse     func(ctx context.Context, document interface{}, modelID interface{}) SaveDocumentStubResponse
-	GetDocumentByIdStubResponse  func(ctx context.Context, recordId interface{}) GetDocumentByIdStubResponse
-	CloseConnectionStubResponse  func(ctx context.Context) CloseConnectionStubResponse
-	GetMongoCollectionStubReturn func() GetMongoCollectionStubReturn
-	GetMongoClientStubReturn     func() GetMongoClientStubReturn
-	ScanCollectionStubReturn     func(ctx context.Context) ScanCollectionStubReturn
+type StubDatabaseClient struct {
+	GetDocumentByIdReturn func(ctx context.Context, recordID interface{}, collectionName string) (MongoCursor, error)
+	SaveDocumentReturn    func(ctx context.Context, collectionName string, document interface{}, modelID interface{}) (bool, error)
+	ScanCollectionReturn  func(ctx context.Context, collectionName string) (MongoCursor, error)
+	CountDocumentsReturn  func(ctx context.Context, collectionName string, filter interface{}) (int64, error)
+	CloseConnectionReturn func(ctx context.Context) error
+	GetMongoClientReturn  func() *mongo.Client
+	GetDatabaseReturn     func() *mongo.Database
+	MustValidateReturn    func()
 }
 
-type ScanCollectionStubReturn struct {
-	Cursor MongoCursor
-	Err    error
+func (s StubDatabaseClient) GetDocumentById(ctx context.Context, recordID interface{}, collectionName string) (MongoCursor, error) {
+	return s.GetDocumentByIdReturn(ctx, recordID, collectionName)
 }
 
-func (m *StubMongoClient) ScanCollection(ctx context.Context) (MongoCursor, error) {
-	res := m.ScanCollectionStubReturn(ctx)
-	return res.Cursor, res.Err
+func (s StubDatabaseClient) SaveDocument(ctx context.Context, collectionName string, document interface{}, modelID interface{}) (bool, error) {
+	return s.SaveDocumentReturn(ctx, collectionName, document, modelID)
 }
 
-type GetMongoCollectionStubReturn struct {
-	Collection *mongo.Collection
+func (s StubDatabaseClient) ScanCollection(ctx context.Context, collectionName string) (MongoCursor, error) {
+	return s.ScanCollectionReturn(ctx, collectionName)
 }
 
-func (m *StubMongoClient) GetMongoCollection() *mongo.Collection {
-	return m.GetMongoCollectionStubReturn().Collection
+func (s StubDatabaseClient) CountDocuments(ctx context.Context, collectionName string, filter interface{}) (int64, error) {
+	return s.CountDocumentsReturn(ctx, collectionName, filter)
 }
 
-type GetMongoClientStubReturn struct {
-	Client *mongo.Client
+func (s StubDatabaseClient) CloseConnection(ctx context.Context) error {
+	return s.CloseConnectionReturn(ctx)
 }
 
-func (m *StubMongoClient) GetMongoClient() *mongo.Client {
-	return m.GetMongoClientStubReturn().Client
+func (s StubDatabaseClient) GetMongoClient() *mongo.Client {
+	return s.GetMongoClientReturn()
 }
 
-func (m *StubMongoClient) GetDocumentById(ctx context.Context, recordId interface{}) (MongoCursor, error) {
-	res := m.GetDocumentByIdStubResponse(ctx, recordId)
-	return res.Cursor, res.Error
+func (s StubDatabaseClient) GetDatabase() *mongo.Database {
+	return s.GetDatabaseReturn()
 }
 
-func (m *StubMongoClient) SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error) {
-	res := m.SaveDocumentStubResponse(ctx, document, modelID)
-	return res.Result, res.Error
+func (s StubDatabaseClient) MustValidate() {
+	s.MustValidateReturn()
 }
 
-func (m *StubMongoClient) CountDocuments(ctx context.Context, filter primitive.M) (int64, error) {
-	res := m.CountDocumentsStubResponse(ctx, filter)
-	return res.Count, res.Error
+type StubCollectionClient struct {
+	GetDocumentByIdReturn func(ctx context.Context, recordID interface{}) (MongoCursor, error)
+	SaveDocumentReturn    func(ctx context.Context, document interface{}, modelID interface{}) (bool, error)
+	ScanCollectionReturn  func(ctx context.Context) (MongoCursor, error)
+	CountDocumentsReturn  func(ctx context.Context, filter interface{}) (int64, error)
+	CloseConnectionReturn func(ctx context.Context) error
+	GetMongoClientReturn  func() *mongo.Client
+	GetCollectionReturn   func() *mongo.Collection
+	MustValidateReturn    func()
 }
-func (m *StubMongoClient) CloseConnection(ctx context.Context) error {
-	return m.CloseConnectionStubResponse(ctx).Error
+
+func (s StubCollectionClient) GetDocumentById(ctx context.Context, recordID interface{}) (MongoCursor, error) {
+	return s.GetDocumentByIdReturn(ctx, recordID)
+}
+
+func (s StubCollectionClient) SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error) {
+	return s.SaveDocumentReturn(ctx, document, modelID)
+}
+
+func (s StubCollectionClient) ScanCollection(ctx context.Context) (MongoCursor, error) {
+	return s.ScanCollectionReturn(ctx)
+}
+
+func (s StubCollectionClient) CountDocuments(ctx context.Context, filter interface{}) (int64, error) {
+	return s.CountDocumentsReturn(ctx, filter)
+}
+
+func (s StubCollectionClient) CloseConnection(ctx context.Context) error {
+	return s.CloseConnectionReturn(ctx)
+}
+
+func (s StubCollectionClient) GetMongoClient() *mongo.Client {
+	return s.GetMongoClientReturn()
+}
+
+func (s StubCollectionClient) GetCollection() *mongo.Collection {
+	return s.GetCollectionReturn()
+}
+
+func (s StubCollectionClient) MustValidate() {
+	s.MustValidateReturn()
 }
