@@ -2,7 +2,9 @@ package mongodb
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
+	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 type StubDatabaseClient struct {
@@ -14,6 +16,24 @@ type StubDatabaseClient struct {
 	GetMongoClientReturn  func() *mongo.Client
 	GetDatabaseReturn     func() *mongo.Database
 	MustValidateReturn    func()
+	WithDatabaseReturn    func(database string, databaseOptions *options.DatabaseOptions)
+	WithConnectionReturn  func(mongoUri string, opts *options.ClientOptions)
+	WithLoggerReturn      func(logger *log.Logger)
+}
+
+func (s StubDatabaseClient) WithDatabase(database string, databaseOptions *options.DatabaseOptions) DatabaseClient {
+	s.WithDatabaseReturn(database, databaseOptions)
+	return s
+}
+
+func (s StubDatabaseClient) WithConnection(mongoUri string, opts *options.ClientOptions) DatabaseClient {
+	s.WithConnectionReturn(mongoUri, opts)
+	return s
+}
+
+func (s StubDatabaseClient) WithLogger(logger *log.Logger) DatabaseClient {
+	s.WithLoggerReturn(logger)
+	return s
 }
 
 func (s StubDatabaseClient) GetDocumentById(ctx context.Context, recordID interface{}, collectionName string) (MongoCursor, error) {
@@ -57,6 +77,24 @@ type StubCollectionClient struct {
 	GetMongoClientReturn  func() *mongo.Client
 	GetCollectionReturn   func() *mongo.Collection
 	MustValidateReturn    func()
+	WithCollectionReturn  func(database, collection string, databaseOptions *options.DatabaseOptions)
+	WithConnectionReturn  func(mongoUri string, opts *options.ClientOptions)
+	WithLoggerReturn      func(logger *log.Logger)
+}
+
+func (s StubCollectionClient) WithCollection(database, collection string, databaseOptions *options.DatabaseOptions) CollectionClient {
+	s.WithCollectionReturn(database, collection, databaseOptions)
+	return s
+}
+
+func (s StubCollectionClient) WithConnection(mongoUri string, opts *options.ClientOptions) CollectionClient {
+	s.WithConnectionReturn(mongoUri, opts)
+	return s
+}
+
+func (s StubCollectionClient) WithLogger(logger *log.Logger) CollectionClient {
+	s.WithLoggerReturn(logger)
+	return s
 }
 
 func (s StubCollectionClient) GetDocumentById(ctx context.Context, recordID interface{}) (MongoCursor, error) {

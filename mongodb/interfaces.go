@@ -2,6 +2,7 @@ package mongodb
 
 import (
 	"context"
+	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -76,7 +77,15 @@ type (
 		MongoCollectionScanner
 	}
 
+	DatabaseClientOptionSetter interface {
+		WithDatabase(database string, databaseOptions *options.DatabaseOptions) DatabaseClient
+		WithConnection(mongoUri string, opts *options.ClientOptions) DatabaseClient
+
+		WithLogger(logger *log.Logger) DatabaseClient
+	}
+
 	DatabaseClient interface {
+		DatabaseClientOptionSetter
 		GetDocumentById(ctx context.Context, recordID interface{}, collectionName string) (MongoCursor, error)
 		SaveDocument(ctx context.Context, collectionName string, document interface{}, modelID interface{}) (bool, error)
 		ScanCollection(ctx context.Context, collectionName string) (MongoCursor, error)
@@ -87,7 +96,15 @@ type (
 		MustValidate()
 	}
 
+	CollectionClientOptionSetter interface {
+		WithCollection(database, collection string, databaseOptions *options.DatabaseOptions) CollectionClient
+		WithConnection(mongoUri string, opts *options.ClientOptions) CollectionClient
+		WithLogger(logger *log.Logger) CollectionClient
+	}
+
 	CollectionClient interface {
+		CollectionClientOptionSetter
+
 		GetDocumentById(ctx context.Context, recordID interface{}) (MongoCursor, error)
 		SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error)
 		ScanCollection(ctx context.Context) (MongoCursor, error)
