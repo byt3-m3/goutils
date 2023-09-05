@@ -247,9 +247,7 @@ func (c *adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeI
 }
 
 func (c *adminClient) mustSetConnection() {
-	defer c.connMu.Unlock()
 
-	c.connMu.Lock()
 	cConn, err := amqp091.DialConfig(c.amqpUrl, amqp091.Config{
 		SASL:            []amqp091.Authentication{c.amqpAuth},
 		Vhost:           c.vHost,
