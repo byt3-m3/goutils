@@ -27,19 +27,21 @@ func New() RabbitMQConsumer {
 
 func (c *consumer) MustValidate() {
 
-	switch {
-	case c.consumerID == "":
+	if c.consumerID == "" {
 		panic("consumerID not set")
+	}
 
-	case c.amqpUrl == "":
+	if c.amqpUrl == "" {
 		panic("AMQPUrl not set")
 
-	case c.logger == nil:
+	}
+
+	if c.logger == nil {
 		c.logger = logging.NewLogger()
+	}
 
-	case c.conn == nil:
+	if c.conn == nil {
 		c.ResetConnection()
-
 	}
 
 }

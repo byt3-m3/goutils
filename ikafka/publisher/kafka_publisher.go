@@ -51,15 +51,18 @@ func (p *kafkaPublisher) WithKafkaConn(conn *kafka.Conn) Publisher {
 }
 
 func (p *kafkaPublisher) MustValidate() {
-	switch {
-	case p.brokerAddr == "":
+
+	if p.brokerAddr == "" {
 		panic("broker address not set, use WithBroker")
 
-	case p.topic == "":
+	}
+
+	if p.topic == "" {
 		panic("topic not set, user WithTopic")
 
-	case p.conn == nil:
+	}
 
+	if p.conn == nil {
 		switch p.authMechanism.(type) {
 		case nil:
 			p.authMechanism = plain.Mechanism{
@@ -90,6 +93,7 @@ func (p *kafkaPublisher) MustValidate() {
 
 		p.conn = conn
 	}
+
 }
 
 func (p *kafkaPublisher) PublishMessage(ctx context.Context, msg *kafka.Message) (int, error) {

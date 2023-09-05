@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 
@@ -23,18 +24,21 @@ func New() RabbitMQPublisher {
 }
 
 func (p *publisher) MustValidate() {
-	switch {
-	case p.amqpUrl == "":
+	if p.amqpUrl == "" {
 		panic("amqpURL not set")
+	}
 
-	case p.conn == nil:
+	if p.conn == nil {
 		if err := p.ResetConnection(); err != nil {
 			p.logger.Fatalln(err)
 		}
-
-	case p.logger == nil:
-		p.logger = log.New()
 	}
+
+	if p.logger == nil {
+		p.logger = logging.NewLogger()
+
+	}
+
 }
 
 func (p *publisher) WithAMQPUrl(url string) RabbitMQPublisher {

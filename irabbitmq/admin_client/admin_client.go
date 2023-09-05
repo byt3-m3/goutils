@@ -5,12 +5,10 @@ import (
 	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
-	"sync"
 )
 
 type adminClient struct {
 	amqpUrl  string
-	connMu   sync.Mutex
 	conn     *amqp091.Connection
 	amqpAuth amqp091.Authentication
 	vHost    string
@@ -26,14 +24,17 @@ func New() RabbitMQAdminClient {
 
 func (c *adminClient) MustValidate() {
 
-	switch {
-	case c.logger == nil:
+	if c.logger == nil {
 		c.logger = logging.NewLogger()
 
-	case c.amqpUrl == "":
+	}
+
+	if c.amqpUrl == "" {
 		panic("amqpUrl not set, use WithAMQPUrl")
 
-	case c.conn == nil:
+	}
+
+	if c.conn == nil {
 		conn, err := amqp091.DialConfig(c.amqpUrl, amqp091.Config{
 			SASL:            []amqp091.Authentication{c.amqpAuth},
 			Vhost:           c.vHost,
@@ -49,10 +50,8 @@ func (c *adminClient) MustValidate() {
 			c.logger.Error(err)
 			panic(err)
 		}
-		c.connMu.Lock()
-		c.conn = conn
-		c.connMu.Unlock()
 
+		c.conn = conn
 	}
 
 }
@@ -81,12 +80,9 @@ func (c *adminClient) WithPlainAuth(username, password string) RabbitMQAdminClie
 }
 
 func (c *adminClient) WithConnection(conn *amqp091.Connection) RabbitMQAdminClient {
-	defer c.connMu.Unlock()
-
-	c.connMu.Lock()
 	c.conn = conn
 
-	return nil
+	return c
 }
 
 type CreateQueueInput struct {
@@ -98,9 +94,7 @@ type CreateQueueInput struct {
 }
 
 func (c *adminClient) CreateQueue(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error) {
-	defer c.connMu.Unlock()
 
-	c.connMu.Lock()
 	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
@@ -127,9 +121,6 @@ type BindQueueInput struct {
 }
 
 func (c *adminClient) BindQueue(ctx context.Context, input *BindQueueInput) error {
-	defer c.connMu.Unlock()
-
-	c.connMu.Lock()
 
 	c.MustValidate()
 	ch, err := c.getChannel()
@@ -159,9 +150,6 @@ type CreateExchangeInput struct {
 }
 
 func (c *adminClient) CreateExchange(ctx context.Context, input *CreateExchangeInput) error {
-	defer c.connMu.Unlock()
-
-	c.connMu.Lock()
 	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
@@ -182,9 +170,7 @@ func (c *adminClient) CreateExchange(ctx context.Context, input *CreateExchangeI
 }
 
 func (c *adminClient) getChannel() (*amqp091.Channel, error) {
-	defer c.connMu.Unlock()
 
-	c.connMu.Lock()
 	if c.conn.IsClosed() || c.conn == nil {
 		c.mustSetConnection()
 	}
@@ -194,9 +180,7 @@ func (c *adminClient) getChannel() (*amqp091.Channel, error) {
 }
 
 func (c *adminClient) GetConnection() *amqp091.Connection {
-	defer c.connMu.Unlock()
 
-	c.connMu.Lock()
 	c.MustValidate()
 	return c.conn
 }
@@ -209,9 +193,6 @@ type DeleteQueueInput struct {
 }
 
 func (c *adminClient) DeleteQueue(ctx context.Context, input *DeleteQueueInput) error {
-	defer c.connMu.Unlock()
-
-	c.connMu.Lock()
 	c.MustValidate()
 	ch, err := c.conn.Channel()
 	if err != nil {
@@ -233,9 +214,7 @@ type DeleteExchangeInput struct {
 }
 
 func (c *adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeInput) error {
-	defer c.connMu.Unlock()
 
-	c.connMu.Lock()
 	c.MustValidate()
 	ch, err := c.conn.Channel()
 	if err != nil {

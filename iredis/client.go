@@ -1,6 +1,7 @@
 package iredis
 
 import (
+	"github.com/byt3-m3/goutils/logging"
 	"github.com/go-redis/redis"
 	log "github.com/sirupsen/logrus"
 
@@ -19,13 +20,15 @@ func New() Client {
 }
 
 func (c *redisClient) MustValidate() {
-	switch {
-	case c.logger == nil:
-		c.logger = log.New()
-
-	case c.client == nil:
-		panic("client not set, use WithConnection")
+	if c.logger == nil {
+		c.logger = logging.NewLogger()
 	}
+
+	if c.client == nil {
+		panic("client not set, use WithConnection")
+
+	}
+
 }
 
 func (c *redisClient) WithLogger(logger *log.Logger) Client {

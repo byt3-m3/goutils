@@ -50,17 +50,20 @@ func (c *databaseClient) WithLogger(logger *log.Logger) DatabaseClient {
 }
 
 func (c *databaseClient) MustValidate() {
-	switch {
-	case c.mClient == nil:
+	if c.mClient == nil {
 		panic("mongo client not set, use WithConnection")
+	}
 
-	case c.database == nil:
+	if c.database == nil {
 		panic("database not set, use WithDatabase")
 
-	case c.logger == nil:
+	}
+
+	if c.logger == nil {
 		c.logger = logging.NewLogger()
 
 	}
+
 }
 
 func (c *databaseClient) GetDocumentById(ctx context.Context, recordID interface{}, collectionName string) (MongoCursor, error) {

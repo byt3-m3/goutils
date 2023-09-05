@@ -2,8 +2,8 @@ package consumer
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/env_utils"
 	"github.com/byt3-m3/goutils/logging"
+	"github.com/byt3-m3/goutils/vars"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
@@ -56,27 +56,32 @@ func (c *kafkaConsumer) WithAuth(authMechanism sasl.Mechanism) Consumer {
 }
 
 func MustValidate(consumer *kafkaConsumer) bool {
-
-	switch {
-	case len(consumer.brokers) == 0:
+	if len(consumer.brokers) == 0 {
 		panic("no brokers set, use WithBrokers")
 
-	case consumer.topic == "":
+	}
+
+	if consumer.topic == "" {
 		panic("no topic set, use WithTopic")
 
-	case consumer.consumerID == "":
+	}
+
+	if consumer.consumerID == "" {
 		panic("no ConsumerID set, use WithConsumerID")
 
-	case consumer.logger == nil:
+	}
+
+	if consumer.logger == nil {
 		consumer.logger = logging.NewLogger()
-
-	case consumer.authMechanism == nil:
+	}
+	if consumer.authMechanism == nil {
 		consumer.authMechanism = plain.Mechanism{
-			Username: env_utils.GetEnvStrict("KAFKA_USERNAME"),
-			Password: env_utils.GetEnvStrict("KAFKA_PASSWORD"),
+			Username: vars.KafkaUsername,
+			Password: vars.KafkaPassword,
 		}
+	}
 
-	case consumer.reader == nil:
+	if consumer.reader == nil {
 		dialer := &kafka.Dialer{
 
 			SASLMechanism: consumer.authMechanism,
@@ -96,7 +101,6 @@ func MustValidate(consumer *kafkaConsumer) bool {
 		})
 
 		consumer.reader = reader
-
 	}
 
 	return true
