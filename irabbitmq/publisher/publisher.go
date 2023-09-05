@@ -80,6 +80,7 @@ type PublishInput struct {
 }
 
 func (p *publisher) Publish(ctx context.Context, input *PublishInput) error {
+	p.MustValidate()
 	if p.IsClosed() {
 		if err := p.ResetConnection(); err != nil {
 			p.logger.Println(err)
@@ -146,5 +147,6 @@ func (p *publisher) ResetConnection() error {
 }
 
 func (p *publisher) IsClosed() bool {
+	p.MustValidate()
 	return p.conn.IsClosed()
 }
