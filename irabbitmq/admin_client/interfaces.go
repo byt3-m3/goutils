@@ -43,7 +43,7 @@ type ClientOptionSetter interface {
 }
 
 type ClientValidator interface {
-	ValidateClient(client *adminClient) bool
+	MustValidate()
 }
 
 type RabbitMQAdminClient interface {

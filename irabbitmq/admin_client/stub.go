@@ -17,7 +17,7 @@ type StubClient struct {
 	WithVHostStubReturn      func(vhost string)
 	WithPlainAuthStubReturn  func(username, password string)
 	WithConnectionStubReturn func(conn *amqp091.Connection)
-	ValidateClientStubReturn func(client *adminClient) bool
+	MustValidateStubReturn   func()
 	WithLoggerStubReturn     func(logger *log.Logger)
 }
 
@@ -39,6 +39,7 @@ type NewStubClientInput struct {
 	WithConnectionStubReturn func(conn *amqp091.Connection)
 	ValidateClientStubReturn func(client *adminClient) bool
 	WithLoggerStubReturn     func(logger *log.Logger)
+	MustValidateStubReturn   func()
 }
 
 func NewStubClient(input *NewStubClientInput) RabbitMQAdminClient {
@@ -53,7 +54,7 @@ func NewStubClient(input *NewStubClientInput) RabbitMQAdminClient {
 		WithVHostStubReturn:      input.WithVHostStubReturn,
 		WithPlainAuthStubReturn:  input.WithPlainAuthStubReturn,
 		WithConnectionStubReturn: input.WithConnectionStubReturn,
-		ValidateClientStubReturn: input.ValidateClientStubReturn,
+		MustValidateStubReturn:   input.MustValidateStubReturn,
 		WithLoggerStubReturn:     input.WithLoggerStubReturn,
 	}
 }
@@ -81,8 +82,8 @@ func (s *StubClient) WithConnection(conn *amqp091.Connection) RabbitMQAdminClien
 	return s
 }
 
-func (s *StubClient) ValidateClient(client *adminClient) bool {
-	return s.ValidateClientStubReturn(client)
+func (s *StubClient) MustValidate() {
+	s.MustValidateStubReturn()
 }
 
 func (s *StubClient) CreateQueue(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error) {

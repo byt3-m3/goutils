@@ -21,17 +21,16 @@ func New() RabbitMQAdminClient {
 
 }
 
-func (c *adminClient) ValidateClient(client *adminClient) bool {
+func (c *adminClient) MustValidate() {
 
 	switch {
-	case client.amqpUrl == "":
-		c.logger.Warning("amqpUrl not set, use WithAMQPUrl")
-		return false
+	case c.amqpUrl == "":
+		panic("amqpUrl not set, use WithAMQPUrl")
 
-	case client.conn == nil:
-		conn, err := amqp091.DialConfig(client.amqpUrl, amqp091.Config{
-			SASL:            []amqp091.Authentication{client.amqpAuth},
-			Vhost:           client.vHost,
+	case c.conn == nil:
+		conn, err := amqp091.DialConfig(c.amqpUrl, amqp091.Config{
+			SASL:            []amqp091.Authentication{c.amqpAuth},
+			Vhost:           c.vHost,
 			ChannelMax:      0,
 			FrameSize:       0,
 			Heartbeat:       0,
@@ -44,11 +43,10 @@ func (c *adminClient) ValidateClient(client *adminClient) bool {
 			c.logger.Warning(err)
 		}
 
-		client.conn = conn
+		c.conn = conn
 
 	}
 
-	return true
 }
 
 func (c *adminClient) WithLogger(logger *log.Logger) RabbitMQAdminClient {
@@ -89,6 +87,7 @@ type CreateQueueInput struct {
 }
 
 func (c *adminClient) CreateQueue(ctx context.Context, input *CreateQueueInput) (*amqp091.Queue, error) {
+	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
 		return nil, err
@@ -114,6 +113,7 @@ type BindQueueInput struct {
 }
 
 func (c *adminClient) BindQueue(ctx context.Context, input *BindQueueInput) error {
+	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
 		return err
@@ -141,6 +141,7 @@ type CreateExchangeInput struct {
 }
 
 func (c *adminClient) CreateExchange(ctx context.Context, input *CreateExchangeInput) error {
+	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
 		return err
@@ -169,6 +170,7 @@ func (c *adminClient) getChannel() (*amqp091.Channel, error) {
 }
 
 func (c *adminClient) GetConnection() *amqp091.Connection {
+	c.MustValidate()
 	return c.conn
 }
 
@@ -180,6 +182,7 @@ type DeleteQueueInput struct {
 }
 
 func (c *adminClient) DeleteQueue(ctx context.Context, input *DeleteQueueInput) error {
+	c.MustValidate()
 	ch, err := c.conn.Channel()
 	if err != nil {
 		return err
@@ -200,6 +203,7 @@ type DeleteExchangeInput struct {
 }
 
 func (c *adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeInput) error {
+	c.MustValidate()
 	ch, err := c.conn.Channel()
 	if err != nil {
 		return err
