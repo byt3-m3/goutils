@@ -2,6 +2,7 @@ package admin_client
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -27,7 +28,7 @@ type QueueBinder interface {
 }
 
 type ConnectionGetter interface {
-	GetConnection() *amqp091.Connection
+	GetConnection() irabbitmq.Connection
 }
 
 type ClientOptionSetter interface {

@@ -2,7 +2,7 @@ package publisher
 
 import (
 	"context"
-	"github.com/rabbitmq/amqp091-go"
+	"github.com/byt3-m3/goutils/irabbitmq"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -11,7 +11,7 @@ type RabbitMQPublisherConnectionRester interface {
 }
 
 type RabbitMQPublisherConnectionGetter interface {
-	GetConnection() *amqp091.Connection
+	GetConnection() irabbitmq.Connection
 }
 
 type RabbitMQPublisherConnectionChecker interface {

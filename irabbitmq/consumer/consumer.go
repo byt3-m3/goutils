@@ -2,6 +2,7 @@ package consumer
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
@@ -99,7 +100,7 @@ func (c *consumer) Consume(ctx context.Context, queue string) (<-chan amqp091.De
 
 }
 
-func (c *consumer) GetConnection() *amqp091.Connection {
+func (c *consumer) GetConnection() irabbitmq.Connection {
 	return c.conn
 }
 

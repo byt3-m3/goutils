@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
@@ -119,7 +120,7 @@ func (p *publisher) Publish(ctx context.Context, input *PublishInput) error {
 
 }
 
-func (p *publisher) GetConnection() *amqp091.Connection {
+func (p *publisher) GetConnection() irabbitmq.Connection {
 	return p.conn
 }
 
