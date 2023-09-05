@@ -2,6 +2,7 @@ package admin_client
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -24,6 +25,9 @@ func New() RabbitMQAdminClient {
 func (c *adminClient) MustValidate() {
 
 	switch {
+	case c.logger == nil:
+		c.logger = logging.NewLogger()
+
 	case c.amqpUrl == "":
 		panic("amqpUrl not set, use WithAMQPUrl")
 
@@ -40,7 +44,8 @@ func (c *adminClient) MustValidate() {
 			Dial:            nil,
 		})
 		if err != nil {
-			c.logger.Warning(err)
+			c.logger.Error(err)
+			panic(err)
 		}
 
 		c.conn = conn
