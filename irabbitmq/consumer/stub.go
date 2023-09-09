@@ -2,13 +2,14 @@ package consumer
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 )
 
 type StubRabbitMQConsumer struct {
 	ConsumeReturn               func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
-	GetConnectionReturn         func() *amqp091.Connection
+	GetConnectionReturn         func() irabbitmq.Connection
 	IsClosedReturn              func() bool
 	GetActiveChannelStubReturn  func() *amqp091.Channel
 	WithAMQPUrlStubReturn       func(url string)
@@ -18,37 +19,6 @@ type StubRabbitMQConsumer struct {
 	WithPreFetchCountStubReturn func(count int)
 	WithLoggerStubReturn        func(logger *log.Logger)
 	ResetConnectionStubReturn   func()
-}
-
-type NewStubRabbitMQConsumerInput struct {
-	ConsumeReturn               func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
-	GetConnectionReturn         func() *amqp091.Connection
-	IsClosedReturn              func() bool
-	GetActiveChannelStubReturn  func() *amqp091.Channel
-	WithAMQPUrlStubReturn       func(url string)
-	WithConsumerIDStubReturn    func(id string)
-	WithVHostStubReturn         func(vhost string)
-	WithPlainAuthStubReturn     func(username, password string)
-	WithPreFetchCountStubReturn func(count int)
-	WithLoggerStubReturn        func(logger *log.Logger)
-	ResetConnectionStubReturn   func()
-}
-
-func NewStubRabbitMQConsumer(input *NewStubRabbitMQConsumerInput) RabbitMQConsumer {
-
-	return &StubRabbitMQConsumer{
-		ConsumeReturn:               input.ConsumeReturn,
-		GetConnectionReturn:         input.GetConnectionReturn,
-		IsClosedReturn:              input.IsClosedReturn,
-		GetActiveChannelStubReturn:  input.GetActiveChannelStubReturn,
-		WithAMQPUrlStubReturn:       input.WithAMQPUrlStubReturn,
-		WithConsumerIDStubReturn:    input.WithConsumerIDStubReturn,
-		WithVHostStubReturn:         input.WithVHostStubReturn,
-		WithPlainAuthStubReturn:     input.WithPlainAuthStubReturn,
-		WithPreFetchCountStubReturn: input.WithPreFetchCountStubReturn,
-		WithLoggerStubReturn:        input.WithLoggerStubReturn,
-		ResetConnectionStubReturn:   input.ResetConnectionStubReturn,
-	}
 }
 
 func (s *StubRabbitMQConsumer) WithAMQPUrl(url string) RabbitMQConsumer {
@@ -93,7 +63,7 @@ func (s *StubRabbitMQConsumer) Consume(ctx context.Context, queue string) (<-cha
 	return s.ConsumeReturn(ctx, queue)
 }
 
-func (s *StubRabbitMQConsumer) GetConnection() *amqp091.Connection {
+func (s *StubRabbitMQConsumer) GetConnection() irabbitmq.Connection {
 	return s.GetConnectionReturn()
 }
 

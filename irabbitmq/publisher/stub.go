@@ -2,6 +2,7 @@ package publisher
 
 import (
 	"context"
+	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -18,34 +19,6 @@ type StubRabbitMQPublisher struct {
 	WithPlainAuthStubReturn   func(username, password string)
 
 	MustValidateStubReturn func()
-}
-
-type NewStubRabbitMQPublisherInput struct {
-	PublishStubReturn         func(ctx context.Context, input *PublishInput) error
-	GetConnectionStubReturn   func() *amqp091.Connection
-	ResetConnectionStubReturn func() error
-	IsClosedStubReturn        func() bool
-	WithAMQPUrlStubReturn     func(url string)
-	WithVHostStubReturn       func(vhost string)
-	WithLoggerStubReturn      func(logger *log.Logger)
-	WithNoAuthStubReturn      func()
-	WithPlainAuthStubReturn   func(username, password string)
-}
-
-func NewStubRabbitMQPublisher(input *NewStubRabbitMQPublisherInput) RabbitMQPublisher {
-
-	return &StubRabbitMQPublisher{
-		PublishStubReturn:         input.PublishStubReturn,
-		GetConnectionStubReturn:   input.GetConnectionStubReturn,
-		ResetConnectionStubReturn: input.ResetConnectionStubReturn,
-		IsClosedStubReturn:        input.IsClosedStubReturn,
-		WithAMQPUrlStubReturn:     input.WithAMQPUrlStubReturn,
-		WithVHostStubReturn:       input.WithVHostStubReturn,
-		WithLoggerStubReturn:      input.WithLoggerStubReturn,
-		WithNoAuthStubReturn:      input.WithNoAuthStubReturn,
-		WithPlainAuthStubReturn:   input.WithPlainAuthStubReturn,
-		MustValidateStubReturn:    input.WithNoAuthStubReturn,
-	}
 }
 
 func (s *StubRabbitMQPublisher) WithAMQPUrl(url string) RabbitMQPublisher {
@@ -91,7 +64,7 @@ type GetConnectionStubReturn struct {
 	Conn *amqp091.Connection
 }
 
-func (s *StubRabbitMQPublisher) GetConnection() *amqp091.Connection {
+func (s *StubRabbitMQPublisher) GetConnection() irabbitmq.Connection {
 	return s.GetConnectionStubReturn()
 }
 
