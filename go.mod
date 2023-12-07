@@ -1,13 +1,13 @@
 module github.com/byt3-m3/goutils
 
-go 1.18
+go 1.21
 
 require (
 	github.com/go-redis/redis v6.15.9+incompatible
 	github.com/rabbitmq/amqp091-go v1.8.1
 	github.com/segmentio/kafka-go v0.4.38
 	github.com/sirupsen/logrus v1.9.3
-	github.com/stretchr/testify v1.8.1
+	github.com/stretchr/testify v1.8.4
 	go.mongodb.org/mongo-driver v1.11.1
 	go.uber.org/dig v1.16.1
 )
