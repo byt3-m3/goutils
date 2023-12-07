@@ -11,7 +11,7 @@ type StubRabbitMQConsumer struct {
 	ConsumeReturn               func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
 	GetConnectionReturn         func() irabbitmq.Connection
 	IsClosedReturn              func() bool
-	GetActiveChannelStubReturn  func() *amqp091.Channel
+	GetActiveChannelStubReturn  func() irabbitmq.Channel
 	WithAMQPUrlStubReturn       func(url string)
 	WithConsumerIDStubReturn    func(id string)
 	WithVHostStubReturn         func(vhost string)
@@ -55,7 +55,7 @@ func (s *StubRabbitMQConsumer) ResetConnection() {
 	s.ResetConnectionStubReturn()
 }
 
-func (s *StubRabbitMQConsumer) GetActiveChannel() *amqp091.Channel {
+func (s *StubRabbitMQConsumer) GetActiveChannel() irabbitmq.Channel {
 	return s.GetActiveChannelStubReturn()
 }
 
