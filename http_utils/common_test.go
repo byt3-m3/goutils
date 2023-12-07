@@ -8,8 +8,6 @@ import (
 	"testing"
 )
 
-var ()
-
 type TestData struct {
 	Name string
 }
