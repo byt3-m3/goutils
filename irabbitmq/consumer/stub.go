@@ -3,6 +3,7 @@ package consumer
 import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq"
+	"github.com/byt3-m3/goutils/irabbitmq/connection_handler"
 	"github.com/rabbitmq/amqp091-go"
 	log "github.com/sirupsen/logrus"
 )
@@ -19,6 +20,11 @@ type StubRabbitMQConsumer struct {
 	WithPreFetchCountStubReturn func(count int)
 	WithLoggerStubReturn        func(logger *log.Logger)
 	ResetConnectionStubReturn   func()
+}
+
+func (s *StubRabbitMQConsumer) GetConnectionHandler() connection_handler.ConnectionHandler {
+	//TODO implement me
+	panic("implement me")
 }
 
 func (s *StubRabbitMQConsumer) WithAMQPUrl(url string) RabbitMQConsumer {
