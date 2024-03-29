@@ -2,9 +2,9 @@ package mongodb
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log/slog"
 )
 
 type StubDatabaseClient struct {
@@ -18,7 +18,7 @@ type StubDatabaseClient struct {
 	MustValidateReturn    func()
 	WithDatabaseReturn    func(database string, databaseOptions *options.DatabaseOptions)
 	WithConnectionReturn  func(mongoUri string, opts *options.ClientOptions)
-	WithLoggerReturn      func(logger *log.Logger)
+	WithLoggerReturn      func(logger *slog.Logger)
 }
 
 func (s StubDatabaseClient) WithDatabase(database string, databaseOptions *options.DatabaseOptions) DatabaseClient {
@@ -31,7 +31,7 @@ func (s StubDatabaseClient) WithConnection(mongoUri string, opts *options.Client
 	return s
 }
 
-func (s StubDatabaseClient) WithLogger(logger *log.Logger) DatabaseClient {
+func (s StubDatabaseClient) WithLogger(logger *slog.Logger) DatabaseClient {
 	s.WithLoggerReturn(logger)
 	return s
 }
@@ -79,7 +79,7 @@ type StubCollectionClient struct {
 	MustValidateReturn    func()
 	WithCollectionReturn  func(database, collection string, databaseOptions *options.DatabaseOptions)
 	WithConnectionReturn  func(mongoUri string, opts *options.ClientOptions)
-	WithLoggerReturn      func(logger *log.Logger)
+	WithLoggerReturn      func(logger *slog.Logger)
 }
 
 func (s StubCollectionClient) WithCollection(database, collection string, databaseOptions *options.DatabaseOptions) CollectionClient {
@@ -92,7 +92,7 @@ func (s StubCollectionClient) WithConnection(mongoUri string, opts *options.Clie
 	return s
 }
 
-func (s StubCollectionClient) WithLogger(logger *log.Logger) CollectionClient {
+func (s StubCollectionClient) WithLogger(logger *slog.Logger) CollectionClient {
 	s.WithLoggerReturn(logger)
 	return s
 }
