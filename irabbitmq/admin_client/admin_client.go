@@ -5,7 +5,7 @@ import (
 	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type adminClient struct {
@@ -13,7 +13,7 @@ type adminClient struct {
 	conn     *amqp091.Connection
 	amqpAuth amqp091.Authentication
 	vHost    string
-	logger   *log.Logger
+	logger   *slog.Logger
 }
 
 func New() RabbitMQAdminClient {
@@ -26,7 +26,7 @@ func New() RabbitMQAdminClient {
 func (c *adminClient) MustValidate() {
 
 	if c.logger == nil {
-		c.logger = logging.NewLogger()
+		c.logger = logging.NewJSONLogger(slog.LevelInfo, false)
 
 	}
 
@@ -48,7 +48,11 @@ func (c *adminClient) MustValidate() {
 			Dial:            nil,
 		})
 		if err != nil {
-			c.logger.Error(err)
+			c.logger.Error("unable to dial rabbitmq server",
+				slog.Any("error", err),
+				slog.String("url", c.amqpUrl),
+				slog.String("vhost", c.vHost),
+			)
 			panic(err)
 		}
 
@@ -57,7 +61,7 @@ func (c *adminClient) MustValidate() {
 
 }
 
-func (c *adminClient) WithLogger(logger *log.Logger) RabbitMQAdminClient {
+func (c *adminClient) WithLogger(logger *slog.Logger) RabbitMQAdminClient {
 	c.logger = logger
 	return c
 }
@@ -99,6 +103,10 @@ func (c *adminClient) CreateQueue(ctx context.Context, input *CreateQueueInput) 
 	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
+		c.logger.Error("unable to get channel",
+			slog.Any("error", err),
+			slog.String("queue", input.QueName),
+		)
 		return nil, err
 	}
 
@@ -106,6 +114,10 @@ func (c *adminClient) CreateQueue(ctx context.Context, input *CreateQueueInput) 
 
 	q, err := ch.QueueDeclare(input.QueName, input.IsDurable, input.CanAutoDelete, input.IsExclusive, input.CanNoWait, nil)
 	if err != nil {
+		c.logger.Error("unable to declare queue",
+			slog.Any("error", err),
+			slog.String("queue", input.QueName),
+		)
 		return nil, err
 	}
 
@@ -126,6 +138,10 @@ func (c *adminClient) BindQueue(ctx context.Context, input *BindQueueInput) erro
 	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
+		c.logger.Error("unable to get channel",
+			slog.Any("error", err),
+			slog.String("queue", input.QueName),
+		)
 		return err
 	}
 
@@ -133,6 +149,10 @@ func (c *adminClient) BindQueue(ctx context.Context, input *BindQueueInput) erro
 
 	if err := ch.QueueBind(input.QueName, input.Key, input.Exchange, input.CanNoWait, input.Args); err != nil {
 		amqpErr := err.(*amqp091.Error)
+		c.logger.Error("unable to bind queue",
+			slog.Any("error", err),
+			slog.String("queue", input.QueName),
+		)
 		return amqpErr
 
 	}
@@ -154,6 +174,10 @@ func (c *adminClient) CreateExchange(ctx context.Context, input *CreateExchangeI
 	c.MustValidate()
 	ch, err := c.getChannel()
 	if err != nil {
+		c.logger.Error("unable to get channel",
+			slog.Any("error", err),
+			slog.String("queue", input.ExchangeName),
+		)
 		return err
 	}
 
@@ -162,8 +186,12 @@ func (c *adminClient) CreateExchange(ctx context.Context, input *CreateExchangeI
 	err = ch.ExchangeDeclare(input.ExchangeName, string(input.ExchangeType), input.IsDurable, input.CanAutoDelete, input.IsInternal, input.CanNoWait, nil)
 	if err != nil {
 		amqpErr := err.(amqp091.Error)
-		c.logger.Error(amqpErr)
-		return err
+		c.logger.Error("unable to declare exchange",
+			slog.Any("error", amqpErr),
+			slog.String("exchange_name", input.ExchangeName),
+			slog.Any("exchange_type", input.ExchangeType),
+		)
+		return amqpErr
 	}
 
 	return nil
@@ -202,6 +230,9 @@ func (c *adminClient) DeleteQueue(ctx context.Context, input *DeleteQueueInput) 
 
 	_, err = ch.QueueDelete(input.Name, input.IfUnUsed, input.IfEmpty, input.NoWait)
 	if err != nil {
+		c.logger.Error("error deleting queue",
+			slog.Any("error", err),
+		)
 		return err
 	}
 
@@ -222,8 +253,14 @@ func (c *adminClient) DeleteExchange(ctx context.Context, input *DeleteExchangeI
 		return err
 	}
 
-	return ch.ExchangeDelete(input.Name, input.IfUnUsed, input.NoWait)
+	if err := ch.ExchangeDelete(input.Name, input.IfUnUsed, input.NoWait); err != nil {
+		c.logger.Error("error deleting exchange",
+			slog.Any("error", err),
+		)
+		return err
+	}
 
+	return nil
 }
 
 func (c *adminClient) mustSetConnection() {
