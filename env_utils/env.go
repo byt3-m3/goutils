@@ -1,14 +1,18 @@
 package env_utils
 
 import (
-	"log"
+	"log/slog"
 	"os"
 )
 
 func GetEnvStrict(envVar string) string {
 	val := os.Getenv(envVar)
 	if len(val) == 0 {
-		log.Fatalf("'%s' not found", envVar)
+		slog.Error("env not found",
+			slog.String("env", envVar),
+		)
+		panic("unable to find env")
+
 	}
 
 	return val
@@ -17,6 +21,10 @@ func GetEnvStrict(envVar string) string {
 func GetEnv(envVar, defaultVal string) string {
 	val := os.Getenv(envVar)
 	if len(val) == 0 {
+		slog.Debug("env not found, setting defaultVal",
+			slog.String("env", envVar),
+			slog.String("defaultVal", defaultVal),
+		)
 		return defaultVal
 	}
 

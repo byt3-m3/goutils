@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type OptionsSetter interface {
@@ -14,7 +14,7 @@ type OptionsSetter interface {
 	WithConsumerID(id string) Consumer
 	WithAuth(authMechanism sasl.Mechanism) Consumer
 
-	WithLogger(logger *log.Logger) Consumer
+	WithLogger(logger *slog.Logger) Consumer
 }
 
 type Consumer interface {

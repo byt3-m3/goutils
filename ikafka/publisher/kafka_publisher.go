@@ -6,7 +6,7 @@ import (
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 
 	"time"
 )
@@ -17,14 +17,14 @@ type kafkaPublisher struct {
 	conn          *kafka.Conn
 	partition     int
 	authMechanism sasl.Mechanism
-	logger        *log.Logger
+	logger        *slog.Logger
 }
 
 func NewPublisher() Publisher {
 	return &kafkaPublisher{}
 }
 
-func (p *kafkaPublisher) WithLogger(logger *log.Logger) Publisher {
+func (p *kafkaPublisher) WithLogger(logger *slog.Logger) Publisher {
 	p.logger = logger
 	return p
 }
@@ -88,6 +88,9 @@ func (p *kafkaPublisher) MustValidate() {
 		}
 		conn, err := dialer.DialLeader(context.Background(), "tcp", p.brokerAddr, p.topic, p.partition)
 		if err != nil {
+			p.logger.Error("error dialing kafka leader",
+				slog.Any("error", err),
+			)
 			panic(err)
 		}
 
@@ -99,7 +102,10 @@ func (p *kafkaPublisher) MustValidate() {
 func (p *kafkaPublisher) PublishMessage(ctx context.Context, msg *kafka.Message) (int, error) {
 	written, err := p.conn.WriteMessages(*msg)
 	if err != nil {
-		p.logger.Error(err)
+		p.logger.Error("issue publishing message",
+			slog.Any("error", err),
+			slog.Any("msg", msg),
+		)
 		return 0, err
 	}
 	return written, nil
