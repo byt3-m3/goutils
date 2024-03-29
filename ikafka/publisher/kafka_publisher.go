@@ -52,6 +52,10 @@ func (p *kafkaPublisher) WithKafkaConn(conn *kafka.Conn) Publisher {
 
 func (p *kafkaPublisher) MustValidate() {
 
+	if p.logger == nil {
+		p.logger = slog.Default()
+	}
+
 	if p.brokerAddr == "" {
 		panic("broker address not set, use WithBroker")
 

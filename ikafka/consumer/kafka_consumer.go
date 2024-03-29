@@ -2,7 +2,6 @@ package consumer
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/byt3-m3/goutils/vars"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
@@ -72,7 +71,7 @@ func MustValidate(consumer *kafkaConsumer) bool {
 	}
 
 	if consumer.logger == nil {
-		consumer.logger = logging.NewJSONLogger(slog.LevelInfo, false)
+		consumer.logger = slog.Default()
 	}
 	if consumer.authMechanism == nil {
 		consumer.authMechanism = plain.Mechanism{
