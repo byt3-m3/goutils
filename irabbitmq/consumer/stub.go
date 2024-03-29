@@ -5,26 +5,26 @@ import (
 	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/byt3-m3/goutils/irabbitmq/connection_handler"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type StubRabbitMQConsumer struct {
-	ConsumeReturn               func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
-	GetConnectionReturn         func() irabbitmq.Connection
-	IsClosedReturn              func() bool
-	GetActiveChannelStubReturn  func() irabbitmq.Channel
-	WithAMQPUrlStubReturn       func(url string)
-	WithConsumerIDStubReturn    func(id string)
-	WithVHostStubReturn         func(vhost string)
-	WithPlainAuthStubReturn     func(username, password string)
-	WithPreFetchCountStubReturn func(count int)
-	WithLoggerStubReturn        func(logger *log.Logger)
-	ResetConnectionStubReturn   func()
+	ConsumeReturn                  func(ctx context.Context, queue string) (<-chan amqp091.Delivery, error)
+	GetConnectionReturn            func() irabbitmq.Connection
+	IsClosedReturn                 func() bool
+	GetActiveChannelStubReturn     func() irabbitmq.Channel
+	WithAMQPUrlStubReturn          func(url string)
+	WithConsumerIDStubReturn       func(id string)
+	WithVHostStubReturn            func(vhost string)
+	WithPlainAuthStubReturn        func(username, password string)
+	WithPreFetchCountStubReturn    func(count int)
+	WithLoggerStubReturn           func(logger *slog.Logger)
+	GetConnectionHandlerStubReturn func() connection_handler.ConnectionHandler
+	ResetConnectionStubReturn      func()
 }
 
 func (s *StubRabbitMQConsumer) GetConnectionHandler() connection_handler.ConnectionHandler {
-	//TODO implement me
-	panic("implement me")
+	return s.GetConnectionHandlerStubReturn()
 }
 
 func (s *StubRabbitMQConsumer) WithAMQPUrl(url string) RabbitMQConsumer {
@@ -52,7 +52,7 @@ func (s *StubRabbitMQConsumer) WithPreFetchCount(count int) RabbitMQConsumer {
 	return s
 }
 
-func (s *StubRabbitMQConsumer) WithLogger(logger *log.Logger) RabbitMQConsumer {
+func (s *StubRabbitMQConsumer) WithLogger(logger *slog.Logger) RabbitMQConsumer {
 	s.WithLoggerStubReturn(logger)
 	return s
 }
