@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type StubKafkaPublisher struct {
@@ -13,7 +13,7 @@ type StubKafkaPublisher struct {
 	WithTopicStubReturn      func(topic string)
 	WithBrokerStubReturn     func(broker string)
 	WithKafkaConnStubReturn  func(conn *kafka.Conn)
-	WithLoggerStubReturn     func(logger *log.Logger)
+	WithLoggerStubReturn     func(logger *slog.Logger)
 }
 
 type NewStubKafkaPublisherInput struct {
@@ -22,7 +22,7 @@ type NewStubKafkaPublisherInput struct {
 	WithTopicStubReturn      func(topic string)
 	WithBrokerStubReturn     func(broker string)
 	WithKafkaConnStubReturn  func(conn *kafka.Conn)
-	WithLoggerStubReturn     func(logger *log.Logger)
+	WithLoggerStubReturn     func(logger *slog.Logger)
 }
 
 func NewStubKafkaPublisher(input *NewStubKafkaPublisherInput) Publisher {
@@ -37,7 +37,7 @@ func NewStubKafkaPublisher(input *NewStubKafkaPublisherInput) Publisher {
 	}
 }
 
-func (s *StubKafkaPublisher) WithLogger(logger *log.Logger) Publisher {
+func (s *StubKafkaPublisher) WithLogger(logger *slog.Logger) Publisher {
 	s.WithLoggerStubReturn(logger)
 	return s
 }

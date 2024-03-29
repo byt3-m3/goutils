@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type StubClient struct {
@@ -19,10 +19,10 @@ type StubClient struct {
 	WithPlainAuthStubReturn  func(username, password string)
 	WithConnectionStubReturn func(conn *amqp091.Connection)
 	MustValidateStubReturn   func()
-	WithLoggerStubReturn     func(logger *log.Logger)
+	WithLoggerStubReturn     func(logger *slog.Logger)
 }
 
-func (s *StubClient) WithLogger(logger *log.Logger) RabbitMQAdminClient {
+func (s *StubClient) WithLogger(logger *slog.Logger) RabbitMQAdminClient {
 	s.WithLoggerStubReturn(logger)
 	return s
 }

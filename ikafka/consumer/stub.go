@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type StubKafkaConsumer struct {
@@ -15,10 +15,10 @@ type StubKafkaConsumer struct {
 	WithBrokersStubReturn    func(brokers []string)
 	WithConsumerIDStubReturn func(consumerID string)
 	WithAuthStubReturn       func(authMechanism sasl.Mechanism)
-	WithLoggerStubReturn     func(logger *log.Logger)
+	WithLoggerStubReturn     func(logger *slog.Logger)
 }
 
-func (s *StubKafkaConsumer) WithLogger(logger *log.Logger) Consumer {
+func (s *StubKafkaConsumer) WithLogger(logger *slog.Logger) Consumer {
 	s.WithLoggerStubReturn(logger)
 	return s
 }

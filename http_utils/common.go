@@ -2,7 +2,7 @@ package http_utils
 
 import (
 	"encoding/json"
-	"log"
+	"log/slog"
 	"net/http"
 )
 
@@ -19,7 +19,9 @@ func setJSONHalHeader(w http.ResponseWriter) {
 func marshallInterface(data interface{}) ([]byte, error) {
 	respBytes, err := json.Marshal(data)
 	if err != nil {
-		log.Println(err)
+		slog.Error("error marshalling interface",
+			slog.Any("data", data),
+		)
 		return nil, err
 	}
 	return respBytes, nil

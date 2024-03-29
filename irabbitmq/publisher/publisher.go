@@ -3,9 +3,8 @@ package publisher
 import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq"
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 
 	"time"
 )
@@ -13,7 +12,7 @@ import (
 type publisher struct {
 	amqpUrl  string
 	vHost    string
-	logger   *log.Logger
+	logger   *slog.Logger
 	conn     *amqp091.Connection
 	amqpAuth amqp091.Authentication
 }
@@ -31,12 +30,13 @@ func (p *publisher) MustValidate() {
 
 	if p.conn == nil {
 		if err := p.ResetConnection(); err != nil {
-			p.logger.Fatalln(err)
+
+			panic(err)
 		}
 	}
 
 	if p.logger == nil {
-		p.logger = logging.NewLogger()
+		p.logger = slog.Default()
 
 	}
 
@@ -52,7 +52,7 @@ func (p *publisher) WithVHost(vhost string) RabbitMQPublisher {
 	return p
 }
 
-func (p *publisher) WithLogger(log *log.Logger) RabbitMQPublisher {
+func (p *publisher) WithLogger(log *slog.Logger) RabbitMQPublisher {
 	p.logger = log
 	return p
 }
@@ -84,14 +84,16 @@ func (p *publisher) Publish(ctx context.Context, input *PublishInput) error {
 	p.MustValidate()
 	if p.IsClosed() {
 		if err := p.ResetConnection(); err != nil {
-			p.logger.Println(err)
 			return err
 		}
 	}
 
 	ch, err := p.conn.Channel()
 	if err != nil {
-		p.logger.Println(err)
+		p.logger.Error("unable to get channel",
+			slog.Any("error", err),
+			slog.Any("remote_address", p.conn.RemoteAddr().String()),
+		)
 		return err
 	}
 	defer ch.Close()
@@ -112,7 +114,10 @@ func (p *publisher) Publish(ctx context.Context, input *PublishInput) error {
 		AppId:  "",
 		Body:   input.Data,
 	}); err != nil {
-		p.logger.Println(err)
+		p.logger.Error(
+			"unable to publish with context",
+			slog.Any("error", err),
+		)
 		return err
 	}
 
@@ -138,7 +143,9 @@ func (p *publisher) ResetConnection() error {
 	})
 
 	if err != nil {
-		p.logger.Println(err)
+		p.logger.Error("unable to dial server",
+			slog.Any("error", err),
+		)
 		return err
 	}
 

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type QueueCreator interface {
@@ -40,7 +40,7 @@ type ClientOptionSetter interface {
 
 	WithConnection(conn *amqp091.Connection) RabbitMQAdminClient
 
-	WithLogger(logger *log.Logger) RabbitMQAdminClient
+	WithLogger(logger *slog.Logger) RabbitMQAdminClient
 }
 
 type ClientValidator interface {

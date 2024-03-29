@@ -2,9 +2,8 @@ package connection_handler
 
 import (
 	"github.com/byt3-m3/goutils/irabbitmq"
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type ConnectionHandler interface {
@@ -18,7 +17,7 @@ type connectionHandler struct {
 	amqpAuth       amqp091.Authentication
 	connection     *amqp091.Connection
 	currentChannel *amqp091.Channel
-	logger         *log.Logger
+	logger         *slog.Logger
 }
 
 type NewConnectionHandlerOptions func(h *connectionHandler)
@@ -64,7 +63,7 @@ func (c *connectionHandler) MustValidate() {
 	}
 
 	if c.logger == nil {
-		c.logger = logging.NewLogger()
+		c.logger = slog.Default()
 	}
 
 	if c.connection == nil {
@@ -121,7 +120,9 @@ func (c *connectionHandler) ResetConnection() error {
 	})
 
 	if err != nil {
-		c.logger.Error(err)
+		c.logger.Error("error dialing client",
+			slog.Any("error", err),
+		)
 		return err
 	}
 

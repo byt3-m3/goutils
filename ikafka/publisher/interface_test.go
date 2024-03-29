@@ -5,7 +5,7 @@ import (
 	"errors"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 	"testing"
 	"time"
 )
@@ -27,7 +27,7 @@ var (
 		WithKafkaConnStubReturn: func(conn *kafka.Conn) {
 
 		},
-		WithLoggerStubReturn: func(logger *log.Logger) {
+		WithLoggerStubReturn: func(logger *slog.Logger) {
 
 		},
 	})

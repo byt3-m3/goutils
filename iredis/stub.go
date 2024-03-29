@@ -2,7 +2,7 @@ package iredis
 
 import (
 	"github.com/go-redis/redis"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 	"time"
 )
 
@@ -11,7 +11,7 @@ type StubRedisClient struct {
 	GetStubReturn        func(key string) *redis.StringCmd
 	GetClientStubReturn  func() *redis.Client
 	MustValidateReturn   func()
-	WithLoggerReturn     func(logger *log.Logger) Client
+	WithLoggerReturn     func(logger *slog.Logger) Client
 	WithConnectionReturn func(host, password string, db int) Client
 }
 
@@ -19,7 +19,7 @@ func (s *StubRedisClient) MustValidate() {
 	s.MustValidateReturn()
 }
 
-func (s *StubRedisClient) WithLogger(logger *log.Logger) Client {
+func (s *StubRedisClient) WithLogger(logger *slog.Logger) Client {
 	s.WithLoggerReturn(logger)
 	return s
 }

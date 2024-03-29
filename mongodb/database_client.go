@@ -3,17 +3,17 @@ package mongodb
 import (
 	"context"
 	"errors"
-	"github.com/byt3-m3/goutils/logging"
 	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log/slog"
 )
 
 type databaseClient struct {
 	mClient  *mongo.Client
 	database *mongo.Database
-	logger   *log.Logger
+	logger   *slog.Logger
 }
 
 func NewDatabaseClient() DatabaseClient {
@@ -33,7 +33,10 @@ func (c *databaseClient) WithConnection(mongoUri string, opts *options.ClientOpt
 
 	newClient, err := mongo.NewClient(opts)
 	if err != nil {
-		c.logger.Fatalln(err)
+		c.logger.Error("unable to get mongodb client",
+			slog.Any("error", err),
+		)
+		panic(err)
 	}
 	if err := newClient.Connect(context.Background()); err != nil {
 		log.Println(err)
@@ -43,7 +46,7 @@ func (c *databaseClient) WithConnection(mongoUri string, opts *options.ClientOpt
 	return c
 }
 
-func (c *databaseClient) WithLogger(logger *log.Logger) DatabaseClient {
+func (c *databaseClient) WithLogger(logger *slog.Logger) DatabaseClient {
 	c.logger = logger
 
 	return c
@@ -60,7 +63,7 @@ func (c *databaseClient) MustValidate() {
 	}
 
 	if c.logger == nil {
-		c.logger = logging.NewLogger()
+		c.logger = slog.Default()
 
 	}
 
@@ -74,13 +77,17 @@ func (c *databaseClient) GetDocumentById(ctx context.Context, recordID interface
 
 	result, err := FindDocument(ctx, collection, primitive.M{"_id": recordID})
 	if err != nil {
-		c.logger.Error(err)
+		c.logger.Error("unable to find document",
+			slog.Any("error", err),
+		)
 	}
 
 	if !result.HasData {
-		c.logger.WithFields(map[string]interface{}{
-			"results": result,
-		}).Warning("document contains no data")
+
+		c.logger.Warn("document contains no data",
+			slog.Any("results", result),
+		)
+
 		return nil, nil
 	}
 
@@ -95,6 +102,9 @@ func (c *databaseClient) SaveDocument(ctx context.Context, collectionName string
 
 	res, err := SaveOrUpdateDocument(ctx, collection, document, modelID)
 	if err != nil {
+		c.logger.Error("insert failed, attempting to replace",
+			slog.Any("model_id", modelID),
+		)
 		return false, err
 	}
 
@@ -135,7 +145,7 @@ func (c *databaseClient) CountDocuments(ctx context.Context, collectionName stri
 		return count, nil
 
 	default:
-		c.logger.Warning("no valid type detected")
+		c.logger.Warn("no valid type detected")
 		return 0, errors.New("invalid type")
 
 	}

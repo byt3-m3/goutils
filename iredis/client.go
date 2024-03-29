@@ -1,16 +1,15 @@
 package iredis
 
 import (
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/go-redis/redis"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 
 	"time"
 )
 
 type redisClient struct {
 	client *redis.Client
-	logger *log.Logger
+	logger *slog.Logger
 }
 
 func New() Client {
@@ -21,7 +20,7 @@ func New() Client {
 
 func (c *redisClient) MustValidate() {
 	if c.logger == nil {
-		c.logger = logging.NewLogger()
+		c.logger = slog.Default()
 	}
 
 	if c.client == nil {
@@ -31,7 +30,7 @@ func (c *redisClient) MustValidate() {
 
 }
 
-func (c *redisClient) WithLogger(logger *log.Logger) Client {
+func (c *redisClient) WithLogger(logger *slog.Logger) Client {
 	c.logger = logger
 	return c
 }

@@ -2,12 +2,11 @@ package consumer
 
 import (
 	"context"
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/byt3-m3/goutils/vars"
 	"github.com/segmentio/kafka-go"
 	"github.com/segmentio/kafka-go/sasl"
 	"github.com/segmentio/kafka-go/sasl/plain"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 
 	"time"
 )
@@ -18,14 +17,14 @@ type kafkaConsumer struct {
 	brokers       []string
 	consumerID    string
 	authMechanism sasl.Mechanism
-	logger        *log.Logger
+	logger        *slog.Logger
 }
 
 func New() Consumer {
 	return &kafkaConsumer{}
 }
 
-func (c *kafkaConsumer) WithLogger(logger *log.Logger) Consumer {
+func (c *kafkaConsumer) WithLogger(logger *slog.Logger) Consumer {
 	c.logger = logger
 	return c
 }
@@ -72,7 +71,7 @@ func MustValidate(consumer *kafkaConsumer) bool {
 	}
 
 	if consumer.logger == nil {
-		consumer.logger = logging.NewLogger()
+		consumer.logger = slog.Default()
 	}
 	if consumer.authMechanism == nil {
 		consumer.authMechanism = plain.Mechanism{
@@ -125,7 +124,9 @@ func (c *kafkaConsumer) ConsumeAsync(ctx context.Context, input *ConsumeAsyncInp
 			msg, err := c.reader.ReadMessage(ctx)
 
 			if err != nil {
-				c.logger.Error("error reading message", err)
+				c.logger.Error("error reading message",
+					slog.Any("error", err),
+				)
 				input.ErrorChan <- err
 			}
 
@@ -139,7 +140,9 @@ func (c *kafkaConsumer) Consume(ctx context.Context) (*kafka.Message, error) {
 	MustValidate(c)
 	msg, err := c.reader.ReadMessage(ctx)
 	if err != nil {
-		c.logger.Error("error reading message")
+		c.logger.Error("error reading message",
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 	return &msg, nil

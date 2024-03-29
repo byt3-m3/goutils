@@ -3,15 +3,14 @@ package consumer
 import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq/connection_handler"
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
+	"log/slog"
 )
 
 type consumer struct {
 	consumerID    string
-	logger        *log.Logger
+	logger        *slog.Logger
 	prefetchCount int
 	connHandler   connection_handler.ConnectionHandler
 }
@@ -30,7 +29,7 @@ func WithPrefetchCount(count int) NewOpt {
 	}
 }
 
-func WithLogger(logger *log.Logger) NewOpt {
+func WithLogger(logger *slog.Logger) NewOpt {
 	return func(c *consumer) {
 		c.logger = logger
 	}
@@ -63,7 +62,7 @@ func (c *consumer) MustValidate() {
 	}
 
 	if c.logger == nil {
-		c.logger = logging.NewLogger()
+		c.logger = slog.Default()
 	}
 
 	if c.connHandler == nil {
@@ -84,7 +83,9 @@ func (c *consumer) Consume(ctx context.Context, queue string) (<-chan amqp091.De
 
 	delivery, err := ch.Consume(queue, c.consumerID, false, false, false, false, nil)
 	if err != nil {
-		c.logger.Println(err)
+		c.logger.Error("error consuming message",
+			slog.Any("error", err),
+		)
 		return nil, err
 	}
 
