@@ -3,7 +3,7 @@ package publisher
 import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type RabbitMQPublisherConnectionRester interface {
@@ -22,7 +22,9 @@ type RabbitMQPublisherOptionSetter interface {
 	WithAMQPUrl(url string) RabbitMQPublisher
 
 	WithVHost(vhost string) RabbitMQPublisher
-	WithLogger(log *log.Logger) RabbitMQPublisher
+
+	WithLogger(log *slog.Logger) RabbitMQPublisher
+
 	WithNoAuth() RabbitMQPublisher
 
 	WithPlainAuth(username, password string) RabbitMQPublisher

@@ -4,7 +4,7 @@ import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq"
 	"github.com/rabbitmq/amqp091-go"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 )
 
 type StubRabbitMQPublisher struct {
@@ -14,7 +14,7 @@ type StubRabbitMQPublisher struct {
 	IsClosedStubReturn        func() bool
 	WithAMQPUrlStubReturn     func(url string)
 	WithVHostStubReturn       func(vhost string)
-	WithLoggerStubReturn      func(logger *log.Logger)
+	WithLoggerStubReturn      func(logger *slog.Logger)
 	WithNoAuthStubReturn      func()
 	WithPlainAuthStubReturn   func(username, password string)
 
@@ -33,7 +33,7 @@ func (s *StubRabbitMQPublisher) WithVHost(vhost string) RabbitMQPublisher {
 
 }
 
-func (s *StubRabbitMQPublisher) WithLogger(logger *log.Logger) RabbitMQPublisher {
+func (s *StubRabbitMQPublisher) WithLogger(logger *slog.Logger) RabbitMQPublisher {
 	s.WithLoggerStubReturn(logger)
 	return s
 }
