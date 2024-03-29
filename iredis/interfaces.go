@@ -2,13 +2,13 @@ package iredis
 
 import (
 	"github.com/go-redis/redis"
-	log "github.com/sirupsen/logrus"
+	"log/slog"
 	"time"
 )
 
 type (
 	ClientOptionSetter interface {
-		WithLogger(logger *log.Logger) Client
+		WithLogger(logger *slog.Logger) Client
 
 		WithConnection(host, password string, db int) Client
 	}
