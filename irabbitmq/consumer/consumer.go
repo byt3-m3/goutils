@@ -3,7 +3,6 @@ package consumer
 import (
 	"context"
 	"github.com/byt3-m3/goutils/irabbitmq/connection_handler"
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"log/slog"
@@ -63,7 +62,7 @@ func (c *consumer) MustValidate() {
 	}
 
 	if c.logger == nil {
-		c.logger = logging.NewJSONLogger(slog.LevelInfo, false)
+		c.logger = slog.Default()
 	}
 
 	if c.connHandler == nil {

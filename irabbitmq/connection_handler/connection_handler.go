@@ -2,7 +2,6 @@ package connection_handler
 
 import (
 	"github.com/byt3-m3/goutils/irabbitmq"
-	"github.com/byt3-m3/goutils/logging"
 	"github.com/rabbitmq/amqp091-go"
 	"log/slog"
 )
@@ -64,7 +63,7 @@ func (c *connectionHandler) MustValidate() {
 	}
 
 	if c.logger == nil {
-		c.logger = logging.NewJSONLogger(slog.LevelInfo, false)
+		c.logger = slog.Default()
 	}
 
 	if c.connection == nil {
