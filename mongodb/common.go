@@ -4,8 +4,7 @@ import (
 	"context"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
-	"log"
+	"log/slog"
 	"strings"
 )
 
@@ -19,22 +18,6 @@ type (
 		ModelId   interface{}
 	}
 )
-
-func getMongoClientV1(cfg *MongoClientConfig) *mongo.Client {
-
-	clientOpts := options.Client().ApplyURI(cfg.MongoURI)
-
-	client, err := mongo.Connect(context.TODO(), clientOpts)
-	if err != nil {
-		log.Fatal(err)
-	}
-	return client
-}
-
-func GetCollectionV1(client *mongo.Client, dbName, collectionName string) *mongo.Collection {
-	return client.Database(dbName).Collection(collectionName)
-
-}
 
 type FindModelResult struct {
 	MongoCursor *mongo.Cursor
@@ -57,7 +40,6 @@ func SaveOrUpdateDocument(ctx context.Context, collection *mongo.Collection, mod
 	result, err := collection.InsertOne(ctx, model)
 	if err != nil {
 		if strings.Contains(err.Error(), "dup key") {
-			log.Printf("insert failed, attempting to replace: %s", modelId)
 
 			if replaceErr := ReplaceDocumentById(ctx, collection, model, modelId); err != nil {
 				return &SaveOrUpdateModelResult{IsSuccess: true, ModelId: modelId}, replaceErr
@@ -85,10 +67,10 @@ func ReplaceDocument(ctx context.Context, collection *mongo.Collection, model in
 		return replaceErr
 	}
 	if updateResult.ModifiedCount > 0 {
-		log.Printf("replace successful")
+		slog.Debug("replace successful")
 
 	} else {
-		log.Println("no records modified")
+		slog.Debug("no records modified")
 	}
 
 	return nil

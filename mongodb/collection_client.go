@@ -3,17 +3,16 @@ package mongodb
 import (
 	"context"
 	"errors"
-	"github.com/byt3-m3/goutils/logging"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log/slog"
 )
 
 type collectionClient struct {
 	mClient    *mongo.Client
 	collection *mongo.Collection
-	logger     *log.Logger
+	logger     *slog.Logger
 }
 
 func NewCollectionClient() CollectionClient {
@@ -33,17 +32,23 @@ func (c *collectionClient) WithConnection(mongoUri string, opts *options.ClientO
 
 	newClient, err := mongo.NewClient(opts)
 	if err != nil {
-		c.logger.Fatalln(err)
+		c.logger.Error("unable to create new mongodb client",
+			slog.Any("error", err),
+			slog.Any("opts", opts),
+		)
 	}
 	if err := newClient.Connect(context.Background()); err != nil {
-		log.Println(err)
+		c.logger.Error("unable to connect to server",
+			slog.Any("error", err),
+			slog.Any("opts", opts),
+		)
 	}
 	c.mClient = newClient
 
 	return c
 }
 
-func (c *collectionClient) WithLogger(logger *log.Logger) CollectionClient {
+func (c *collectionClient) WithLogger(logger *slog.Logger) CollectionClient {
 	c.logger = logger
 
 	return c
@@ -60,7 +65,7 @@ func (c *collectionClient) MustValidate() {
 	}
 
 	if c.logger == nil {
-		c.logger = logging.NewLogger()
+		c.logger = slog.Default()
 
 	}
 
@@ -69,13 +74,18 @@ func (c *collectionClient) MustValidate() {
 func (c *collectionClient) GetDocumentById(ctx context.Context, recordID interface{}) (MongoCursor, error) {
 	result, err := FindDocument(ctx, c.collection, primitive.M{"_id": recordID})
 	if err != nil {
-		c.logger.Error(err)
+		c.logger.Error("unable to get document by id",
+			slog.Any("error", err),
+			slog.Any("record_id", recordID),
+		)
+		return nil, err
 	}
 
 	if !result.HasData {
-		c.logger.WithFields(map[string]interface{}{
-			"results": result,
-		}).Warning("document contains no data")
+		c.logger.Warn("document contains no data",
+			slog.Any("results", result),
+		)
+
 		return nil, nil
 	}
 
@@ -85,6 +95,10 @@ func (c *collectionClient) GetDocumentById(ctx context.Context, recordID interfa
 func (c *collectionClient) SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error) {
 	res, err := SaveOrUpdateDocument(ctx, c.collection, document, modelID)
 	if err != nil {
+		c.logger.Error("insert failed, attempting to replace: %s",
+			slog.Any("model_id", modelID),
+		)
+
 		return false, err
 	}
 
@@ -116,7 +130,7 @@ func (c *collectionClient) CountDocuments(ctx context.Context, filter interface{
 		return count, nil
 
 	default:
-		c.logger.Warning("no valid type detected")
+		c.logger.Warn("no valid type detected")
 		return 0, errors.New("invalid type")
 
 	}

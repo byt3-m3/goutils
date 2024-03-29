@@ -2,9 +2,9 @@ package mongodb
 
 import (
 	"context"
-	log "github.com/sirupsen/logrus"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
+	"log/slog"
 )
 
 type (
@@ -81,7 +81,7 @@ type (
 		WithDatabase(database string, databaseOptions *options.DatabaseOptions) DatabaseClient
 		WithConnection(mongoUri string, opts *options.ClientOptions) DatabaseClient
 
-		WithLogger(logger *log.Logger) DatabaseClient
+		WithLogger(logger *slog.Logger) DatabaseClient
 	}
 
 	DatabaseClient interface {
@@ -99,7 +99,7 @@ type (
 	CollectionClientOptionSetter interface {
 		WithCollection(database, collection string, databaseOptions *options.DatabaseOptions) CollectionClient
 		WithConnection(mongoUri string, opts *options.ClientOptions) CollectionClient
-		WithLogger(logger *log.Logger) CollectionClient
+		WithLogger(logger *slog.Logger) CollectionClient
 	}
 
 	CollectionClient interface {
