@@ -8,33 +8,12 @@ import (
 )
 
 type StubKafkaPublisher struct {
-	PublishMessageStubReturn func(ctx context.Context, msg *kafka.Message) (int, error)
+	PublishMessageStubReturn func(ctx context.Context, msg *kafka.Message) error
 	WithAuthStubReturn       func(authMechanism sasl.Mechanism)
 	WithTopicStubReturn      func(topic string)
 	WithBrokerStubReturn     func(broker string)
 	WithKafkaConnStubReturn  func(conn *kafka.Conn)
 	WithLoggerStubReturn     func(logger *slog.Logger)
-}
-
-type NewStubKafkaPublisherInput struct {
-	PublishMessageStubReturn func(ctx context.Context, msg *kafka.Message) (int, error)
-	WithAuthStubReturn       func(authMechanism sasl.Mechanism)
-	WithTopicStubReturn      func(topic string)
-	WithBrokerStubReturn     func(broker string)
-	WithKafkaConnStubReturn  func(conn *kafka.Conn)
-	WithLoggerStubReturn     func(logger *slog.Logger)
-}
-
-func NewStubKafkaPublisher(input *NewStubKafkaPublisherInput) Publisher {
-
-	return &StubKafkaPublisher{
-		PublishMessageStubReturn: input.PublishMessageStubReturn,
-		WithAuthStubReturn:       input.WithAuthStubReturn,
-		WithTopicStubReturn:      input.WithTopicStubReturn,
-		WithBrokerStubReturn:     input.WithBrokerStubReturn,
-		WithKafkaConnStubReturn:  input.WithKafkaConnStubReturn,
-		WithLoggerStubReturn:     input.WithLoggerStubReturn,
-	}
 }
 
 func (s *StubKafkaPublisher) WithLogger(logger *slog.Logger) Publisher {
@@ -68,6 +47,6 @@ type PublishMessageStubReturn struct {
 	Error error
 }
 
-func (s *StubKafkaPublisher) PublishMessage(ctx context.Context, msg *kafka.Message) (int, error) {
+func (s *StubKafkaPublisher) PublishMessage(ctx context.Context, msg *kafka.Message) error {
 	return s.PublishMessageStubReturn(ctx, msg)
 }
