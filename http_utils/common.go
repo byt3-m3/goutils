@@ -40,6 +40,20 @@ func WriteJSONFromAny(w http.ResponseWriter, body interface{}, httpStatus int) (
 	return bytesWritten, nil
 }
 
+func MustWriteJSONFromAny(w http.ResponseWriter, body interface{}, httpStatus int) {
+	setJSONHeader(w)
+	w.WriteHeader(httpStatus)
+	respBytes, err := marshallInterface(body)
+	if err != nil {
+		panic(err)
+	}
+	_, err = w.Write(respBytes)
+	if err != nil {
+		panic(err)
+	}
+
+}
+
 // WriteJSONFromBytes will write the byte slice to the response writer and set the content-type header to application/json
 func WriteJSONFromBytes(w http.ResponseWriter, respBytes []byte, httpStatus int) (int, error) {
 	setJSONHeader(w)
