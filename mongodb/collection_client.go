@@ -148,3 +148,13 @@ func (c *collectionClient) GetMongoClient() *mongo.Client {
 func (c *collectionClient) GetCollection() *mongo.Collection {
 	return c.collection
 }
+
+func (c *collectionClient) DeleteDocument(ctx context.Context, filter interface{}, logger slog.Logger) error {
+	result, err := c.mClient.Database(c.collection.Database().Name()).Collection(c.collection.Name()).DeleteOne(ctx, filter)
+	if err != nil {
+		return err
+	}
+	logger.Info("deleted %d records",
+		slog.Int("count", int(result.DeletedCount)))
+	return nil
+}
