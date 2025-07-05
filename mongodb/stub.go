@@ -80,6 +80,11 @@ type StubCollectionClient struct {
 	WithCollectionReturn  func(database, collection string, databaseOptions *options.DatabaseOptions)
 	WithConnectionReturn  func(mongoUri string, opts *options.ClientOptions)
 	WithLoggerReturn      func(logger *slog.Logger)
+	DeleteDocumentReturn  func(ctx context.Context, filter interface{}, logger slog.Logger) error
+}
+
+func (s StubCollectionClient) DeleteDocument(ctx context.Context, filter interface{}, logger slog.Logger) error {
+	return s.DeleteDocumentReturn(ctx, filter, logger)
 }
 
 func (s StubCollectionClient) WithCollection(database, collection string, databaseOptions *options.DatabaseOptions) CollectionClient {
