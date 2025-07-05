@@ -154,7 +154,7 @@ func (c *collectionClient) DeleteDocument(ctx context.Context, filter interface{
 	if err != nil {
 		return err
 	}
-	logger.Info("deleted %d records",
+	logger.Debug("deleted records",
 		slog.Int("count", int(result.DeletedCount)))
 	return nil
 }
