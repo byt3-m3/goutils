@@ -81,3 +81,7 @@ func ReplaceDocumentById(ctx context.Context, collection *mongo.Collection, mode
 	return ReplaceDocument(ctx, collection, model, primitive.M{"_id": modelId})
 
 }
+
+func DeleteDocument(ctx context.Context, cClient CollectionClient, filter interface{}, logger slog.Logger) error {
+	return cClient.DeleteDocument(ctx, filter, logger)
+}

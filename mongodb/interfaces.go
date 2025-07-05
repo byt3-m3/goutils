@@ -104,7 +104,7 @@ type (
 
 	CollectionClient interface {
 		CollectionClientOptionSetter
-
+		DeleteDocument(ctx context.Context, filter interface{}, logger slog.Logger) error
 		GetDocumentById(ctx context.Context, recordID interface{}) (MongoCursor, error)
 		SaveDocument(ctx context.Context, document interface{}, modelID interface{}) (bool, error)
 		ScanCollection(ctx context.Context) (MongoCursor, error)
