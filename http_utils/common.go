@@ -6,13 +6,9 @@ import (
 	"net/http"
 )
 
-func setJSONHeader(w http.ResponseWriter) {
+// SetJSONHeader Sets the JSON header
+func SetJSONHeader(w http.ResponseWriter) {
 	w.Header().Set("Content-Type", "application/json")
-
-}
-
-func setJSONHalHeader(w http.ResponseWriter) {
-	w.Header().Set("Content-Type", "application/hal+json")
 
 }
 
@@ -29,7 +25,7 @@ func marshallInterface(data interface{}) ([]byte, error) {
 
 // WriteJSONFromAny will write the desired struct to the response writer and set the content-type header to application/json
 func WriteJSONFromAny(w http.ResponseWriter, body interface{}, httpStatus int) (int, error) {
-	setJSONHeader(w)
+	SetJSONHeader(w)
 	w.WriteHeader(httpStatus)
 	respBytes, err := marshallInterface(body)
 	if err != nil {
@@ -40,14 +36,9 @@ func WriteJSONFromAny(w http.ResponseWriter, body interface{}, httpStatus int) (
 	return bytesWritten, nil
 }
 
+// MustWriteJSONFromAny will write the desired struct to the response writer and set the content-type header to application/json
 func MustWriteJSONFromAny(w http.ResponseWriter, body interface{}, httpStatus int) {
-	setJSONHeader(w)
-	w.WriteHeader(httpStatus)
-	respBytes, err := marshallInterface(body)
-	if err != nil {
-		panic(err)
-	}
-	_, err = w.Write(respBytes)
+	_, err := WriteJSONFromAny(w, body, httpStatus)
 	if err != nil {
 		panic(err)
 	}
@@ -56,7 +47,7 @@ func MustWriteJSONFromAny(w http.ResponseWriter, body interface{}, httpStatus in
 
 // WriteJSONFromBytes will write the byte slice to the response writer and set the content-type header to application/json
 func WriteJSONFromBytes(w http.ResponseWriter, respBytes []byte, httpStatus int) (int, error) {
-	setJSONHeader(w)
+	SetJSONHeader(w)
 	w.WriteHeader(httpStatus)
 
 	bytesWritten, err := w.Write(respBytes)
@@ -67,15 +58,30 @@ func WriteJSONFromBytes(w http.ResponseWriter, respBytes []byte, httpStatus int)
 	return bytesWritten, nil
 }
 
-// WriteJSONHalFromBytes will write the byte slice to the response writer and set the content-type header to application/hal+json
-func WriteJSONHalFromBytes(w http.ResponseWriter, respBytes []byte, httpStatus int) (int, error) {
-	setJSONHalHeader(w)
-	w.WriteHeader(httpStatus)
-
-	bytesWritten, err := w.Write(respBytes)
+// MustWriteJSONFromBytes will write the byte slice to the response writer and set the content-type header to application/json
+func MustWriteJSONFromBytes(w http.ResponseWriter, respBytes []byte, httpStatus int) {
+	_, err := WriteJSONFromBytes(w, respBytes, httpStatus)
 	if err != nil {
-		return 0, err
+		panic(err)
+	}
+}
+
+// JSONDecode uses generics to decode the data into the provided type
+func JSONDecode[T any](req *http.Response, v T) (T, error) {
+	var data T
+	if err := json.NewDecoder(req.Body).Decode(&data); err != nil {
+		return v, err
 	}
 
-	return bytesWritten, nil
+	return data, nil
+
+}
+
+// JSONEncode uses generics to encode the data into the provided type
+func JSONEncode[T any](w http.ResponseWriter, v T) (T, error) {
+	if err := json.NewEncoder(w).Encode(v); err != nil {
+		return v, err
+	}
+
+	return v, nil
 }
