@@ -67,13 +67,12 @@ func MustWriteJSONFromBytes(w http.ResponseWriter, respBytes []byte, httpStatus 
 }
 
 // JSONDecode uses generics to decode the data into the provided type
-func JSONDecode[T any](req *http.Response, v T) (T, error) {
-	var data T
-	if err := json.NewDecoder(req.Body).Decode(&data); err != nil {
-		return v, err
+func JSONDecode[T any](req *http.Request, v T) error {
+	if err := json.NewDecoder(req.Body).Decode(&v); err != nil {
+		return err
 	}
 
-	return data, nil
+	return nil
 
 }
 

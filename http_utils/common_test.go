@@ -1,92 +1,126 @@
 package http_utils
 
 import (
-	"bytes"
 	"encoding/json"
 	"github.com/stretchr/testify/assert"
-	"io"
-	"log/slog"
 	"net/http"
 	"strings"
 	"testing"
 )
 
-type TestData struct {
-	Name string
-}
-
-type mockResponseWriter struct {
-	header              http.Header
-	WriteMockFunc       func(bytes []byte) (int, error)
-	WriteHeaderMockFunc func(statusCode int)
-}
-
-func (m mockResponseWriter) Header() http.Header {
-	return m.header
-}
-
-func (m mockResponseWriter) Write(bytes []byte) (int, error) {
-	return m.WriteMockFunc(bytes)
-}
-
-func (m mockResponseWriter) WriteHeader(statusCode int) {
-	m.WriteHeaderMockFunc(statusCode)
-}
-
-func TestWriteJSONFromAny(t *testing.T) {
-	mockWriter := mockResponseWriter{
-		header: http.Header{},
-		WriteMockFunc: func(bytes []byte) (int, error) {
-			return len(bytes), nil
-		},
-		WriteHeaderMockFunc: func(statusCode int) {
-			slog.Info("status received")
-
-		},
-	}
-
-	data := TestData{Name: "test"}
-
-	count, err := WriteJSONFromAny(mockWriter, &data, http.StatusOK)
-	if err != nil {
-		assert.NoError(t, err)
-	}
-	assert.Greater(t, count, 0)
-	assert.Equal(t, mockWriter.Header().Get("Content-Type"), "application/json")
-
-}
-
-func TestWriteJSONFromBytes(t *testing.T) {
-
-	mockWriter := mockResponseWriter{
-		header: http.Header{},
-		WriteMockFunc: func(bytes []byte) (int, error) {
-			return len(bytes), nil
-		},
-		WriteHeaderMockFunc: func(statusCode int) {
-			slog.Info("status received")
-
-		},
-	}
-
-	data := TestData{Name: "test"}
-
-	dataBytes, _ := json.Marshal(&data)
-
-	count, err := WriteJSONFromBytes(mockWriter, dataBytes, http.StatusOK)
-	if err != nil {
-		assert.NoError(t, err)
-	}
-	assert.Greater(t, count, 0)
-	assert.Equal(t, mockWriter.Header().Get("Content-Type"), "application/json")
-}
-
 type TestStruct struct {
 	Name string
 }
 
+type mockResponseWriter struct {
+	header            http.Header
+	writtenBytes      []byte
+	writtenStatusCode int
+}
+
+func newMockResponseWriter() *mockResponseWriter {
+	return &mockResponseWriter{
+		header: make(http.Header),
+	}
+}
+
+func (m *mockResponseWriter) Header() http.Header {
+	return m.header
+}
+
+func (m *mockResponseWriter) Write(bytes []byte) (int, error) {
+	m.writtenBytes = bytes
+	return len(bytes), nil
+}
+
+func (m *mockResponseWriter) WriteHeader(statusCode int) {
+	m.writtenStatusCode = statusCode
+}
+
+func TestWriteJSONFromAny(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      interface{}
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name:       "valid data",
+			input:      TestStruct{Name: "test"},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:       "nil data",
+			input:      nil,
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := newMockResponseWriter()
+			count, err := WriteJSONFromAny(w, tt.input, tt.wantStatus)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Greater(t, count, 0)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(t, tt.wantStatus, w.writtenStatusCode)
+
+			// Verify the written JSON is valid
+			var decoded interface{}
+			assert.NoError(t, json.Unmarshal(w.writtenBytes, &decoded))
+		})
+	}
+}
+
+func TestWriteJSONFromBytes(t *testing.T) {
+	tests := []struct {
+		name       string
+		input      []byte
+		wantStatus int
+		wantErr    bool
+	}{
+		{
+			name:       "valid JSON bytes",
+			input:      []byte(`{"Name":"test"}`),
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+		{
+			name:       "empty bytes",
+			input:      []byte{},
+			wantStatus: http.StatusOK,
+			wantErr:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			w := newMockResponseWriter()
+			count, err := WriteJSONFromBytes(w, tt.input, tt.wantStatus)
+
+			if tt.wantErr {
+				assert.Error(t, err)
+				return
+			}
+
+			assert.NoError(t, err)
+			assert.Equal(t, len(tt.input), count)
+			assert.Equal(t, "application/json", w.Header().Get("Content-Type"))
+			assert.Equal(t, tt.wantStatus, w.writtenStatusCode)
+			assert.Equal(t, tt.input, w.writtenBytes)
+		})
+	}
+}
+
 func TestJSONDecode(t *testing.T) {
-	// Test cases
 	tests := []struct {
 		name     string
 		jsonData string
@@ -101,34 +135,31 @@ func TestJSONDecode(t *testing.T) {
 		},
 		{
 			name:     "invalid json",
-			jsonData: `{"Name": "test name"`, // missing closing brace
+			jsonData: `{"Name": "test name"`,
 			want:     TestStruct{},
 			wantErr:  true,
+		},
+		{
+			name:     "empty json object",
+			jsonData: `{}`,
+			want:     TestStruct{},
+			wantErr:  false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a new response with a ReadCloser body
-			resp := &http.Response{
-				Body: io.NopCloser(strings.NewReader(tt.jsonData)),
-			}
-
-			// Create an empty struct to decode into
+			req, _ := http.NewRequest("POST", "http://example.com", strings.NewReader(tt.jsonData))
 			var got TestStruct
+			err := JSONDecode(req, &got)
 
-			// Call JSONDecode
-			result, err := JSONDecode(resp, got)
-
-			// Check error
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
-			assert.NoError(t, err)
 
-			// Check result
-			assert.Equal(t, tt.want, result)
+			assert.NoError(t, err)
+			assert.Equal(t, tt.want, got)
 		})
 	}
 }
@@ -143,37 +174,30 @@ func TestJSONEncode(t *testing.T) {
 		{
 			name:    "valid struct",
 			input:   TestStruct{Name: "test name"},
-			want:    "{\"Name\":\"test name\"}\n", // Note: json.Encoder adds a newline
+			want:    `{"Name":"test name"}` + "\n",
+			wantErr: false,
+		},
+		{
+			name:    "empty struct",
+			input:   TestStruct{},
+			want:    `{"Name":""}` + "\n",
 			wantErr: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			// Create a buffer to capture the JSON output
-			var buf bytes.Buffer
-			mockWriter := mockResponseWriter{
-				header: http.Header{},
-				WriteMockFunc: func(b []byte) (int, error) {
-					return buf.Write(b)
-				},
-				WriteHeaderMockFunc: func(statusCode int) {},
-			}
+			w := newMockResponseWriter()
+			result, err := JSONEncode(w, tt.input)
 
-			// Call JSONEncode
-			result, err := JSONEncode(mockWriter, tt.input)
-
-			// Check error
 			if tt.wantErr {
 				assert.Error(t, err)
 				return
 			}
+
 			assert.NoError(t, err)
-
-			// Check the encoded output
-			assert.Equal(t, tt.want, buf.String())
-
-			// Check that the returned value matches the input
+			// Check the actual written bytes from the mock writer
+			assert.Equal(t, tt.want, string(w.writtenBytes))
 			assert.Equal(t, tt.input, result)
 		})
 	}
