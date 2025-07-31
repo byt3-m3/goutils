@@ -16,7 +16,7 @@ func _TestPublisher_PublishMessage(t *testing.T) {
 	})
 
 	err := p.PublishMessage(context.Background(), &kafka.Message{
-		Topic:         "",
+		Topic:         "new-test-topic",
 		Partition:     0,
 		Offset:        0,
 		HighWaterMark: 0,

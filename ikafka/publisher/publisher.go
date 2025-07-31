@@ -7,7 +7,6 @@ import (
 )
 
 type publisher struct {
-	//dialer        *kafka.Dialer
 	writer        *kafka.Writer
 	brokerAddress string
 	topic         string
@@ -56,6 +55,46 @@ func NewWithAuth(ctx context.Context, brokerAddr, topic, clientId string, auth s
 		//dialer:        dialer,
 		brokerAddress: brokerAddr,
 		topic:         topic,
+		writer:        writer,
+	}
+}
+
+func New(ctx context.Context, brokerAddr, clientId string, auth sasl.Mechanism) Publisher {
+
+	writer := &kafka.Writer{
+		Addr:            kafka.TCP(brokerAddr),
+		Balancer:        &kafka.LeastBytes{},
+		MaxAttempts:     0,
+		WriteBackoffMin: 0,
+		WriteBackoffMax: 0,
+		BatchSize:       0,
+		BatchBytes:      0,
+		BatchTimeout:    0,
+		ReadTimeout:     0,
+		WriteTimeout:    0,
+		RequiredAcks:    0,
+		Async:           false,
+		Completion:      nil,
+		Compression:     0,
+		Logger:          nil,
+		ErrorLogger:     nil,
+		Transport: &kafka.Transport{
+			Dial:        nil,
+			DialTimeout: 0,
+			IdleTimeout: 0,
+			MetadataTTL: 0,
+			ClientID:    clientId,
+			TLS:         nil,
+			SASL:        auth,
+			Resolver:    nil,
+			Context:     ctx,
+		},
+		AllowAutoTopicCreation: true,
+	}
+
+	return publisher{
+		//dialer:        dialer,
+		brokerAddress: brokerAddr,
 		writer:        writer,
 	}
 }
