@@ -5,7 +5,7 @@ trigger:
   event:
     - pull_request
   branch:
-    - master
+    - main
 
 steps:
   - name: setup-go-and-build
