@@ -4,6 +4,7 @@ name: pr-workflow
 trigger:
   event:
     - pull_request
+    - push
   branch:
     - main
 
