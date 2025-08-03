@@ -5,6 +5,7 @@ trigger:
   event:
     - pull_request
     - push
+    - tag
   branch:
     - main
 
