@@ -1,0 +1,28 @@
+kind: pipeline
+type: docker
+name: pr-workflow
+trigger:
+  event:
+    - pull_request
+    - push
+    - tag
+  branch:
+    - main
+
+steps:
+  - name: setup-go-and-build
+    image: golang:1.23.3
+    environment:
+      CGO_ENABLED: 0
+    commands:
+      - go mod download
+      - go build -v ./...
+  - name: test
+    image: golang:1.23.3
+    commands:
+      - go test -v ./saga/...
+
+
+
+
+
