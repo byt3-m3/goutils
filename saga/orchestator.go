@@ -8,7 +8,8 @@ import (
 )
 
 type Orchestrator struct {
-	Sagas map[string]*Saga
+	Sagas  map[string]*Saga
+	Logger *slog.Logger
 }
 
 type NewOrchestratorOpts func(*Orchestrator)
@@ -21,6 +22,12 @@ func WithSagas(sagas []*Saga) NewOrchestratorOpts {
 	}
 }
 
+func WithLogger(logger *slog.Logger) NewOrchestratorOpts {
+	return func(o *Orchestrator) {
+		o.Logger = logger
+	}
+}
+
 func NewOrchestrator(opts ...NewOrchestratorOpts) *Orchestrator {
 	o := &Orchestrator{
 		Sagas: make(map[string]*Saga),
@@ -28,6 +35,10 @@ func NewOrchestrator(opts ...NewOrchestratorOpts) *Orchestrator {
 
 	for _, opt := range opts {
 		opt(o)
+	}
+
+	if o.Logger == nil {
+		o.Logger = slog.Default()
 	}
 	return o
 }
@@ -43,13 +54,13 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 
 	var errs error
 	for _, saga := range o.Sagas {
-		slog.Info("orchestrating saga",
+		o.Logger.Info("orchestrating saga",
 			slog.String("saga_name", saga.Name),
 			slog.Int("steps_count", len(saga.steps)),
 		)
 		if err := saga.executeActions(ctx); err != nil {
 			errs = errors.Wrap(err, fmt.Sprintf("issue executing saga %s", saga.Name))
-			slog.Info("end orchestrating saga",
+			o.Logger.Info("end orchestrating saga",
 				slog.String("saga_name", saga.Name),
 				slog.Int("steps_count", len(saga.steps)),
 				slog.String("duration", saga.duration().String()),
@@ -58,7 +69,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				slog.String("errors", errs.Error()),
 			)
 		} else {
-			slog.Info("end orchestrating saga",
+			o.Logger.Info("end orchestrating saga",
 				slog.String("saga_name", saga.Name),
 				slog.Int("steps_count", len(saga.steps)),
 				slog.String("duration", saga.duration().String()),
