@@ -115,6 +115,7 @@ func TestSaga(t *testing.T) {
 				fmt.Println("executing step 1")
 				return nil
 			},
+
 			func(ctx context.Context) error {
 				fmt.Println("compensating step 1")
 				return nil
